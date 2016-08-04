@@ -36,9 +36,6 @@ struct Parameters {
   bool useVolatility;
   unsigned volatilityPeriod;
 
-  std::string bitfinexApi;
-  std::string bitfinexSecret;
-  double bitfinexFees;
   std::string okcoinApi;
   std::string okcoinSecret;
   double okcoinFees;

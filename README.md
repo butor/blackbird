@@ -52,7 +52,6 @@ It is never entirely safe to just tell Blackbird to use, say, $25 per exchange. 
 
 | Exchange | Long | Short | Implemented | Tested  | Note |
 | -------- |:----:|:-----:|:-----------:|:-------:| ---- |
-| <a href="https://www.bitfinex.com" target="_blank">Bitfinex</a> | ✓ | ✓ | ✓ | ✓ | |
 | <a href="https://www.okcoin.com" target="_blank">OKCoin</a> | ✓ |  | ✓ | ✓ |their API now offers short selling: <a href="https://www.okcoin.com/about/rest_api.do" target="_blank">link here</a> |
 | <a href="https://www.bitstamp.net" target="_blank">Bitstamp</a> | ✓ |  | ✓ | ✓ | |
 | <a href="https://gemini.com" target="_blank">Gemini</a> | ✓ |  | ✓ | ✓ | |
