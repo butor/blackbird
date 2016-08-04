@@ -23,9 +23,6 @@ Parameters::Parameters(std::string fileName) {
   useVolatility = getBool(getParameter("UseVolatility", configFile));
   volatilityPeriod = getUnsigned(getParameter("VolatilityPeriod", configFile));
 
-  bitfinexApi = getParameter("BitfinexApiKey", configFile);
-  bitfinexSecret = getParameter("BitfinexSecretKey", configFile);
-  bitfinexFees = getDouble(getParameter("BitfinexFees", configFile));
   okcoinApi = getParameter("OkCoinApiKey", configFile);
   okcoinSecret = getParameter("OkCoinSecretKey", configFile);
   okcoinFees = getDouble(getParameter("OkCoinFees", configFile));
