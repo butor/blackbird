@@ -16,7 +16,6 @@
 #include "db_fun.h"
 #include "parameters.h"
 #include "check_entry_exit.h"
-#include "bitfinex.h"
 #include "okcoin.h"
 #include "bitstamp.h"
 #include "gemini.h"
@@ -72,21 +71,6 @@ int main(int argc, char** argv) {
   std::string dbTableName[10];
   int index = 0;
   // add the exchange functions to the arrays for all the defined exchanges
-  if (params.bitfinexApi.empty() == false || params.demoMode == true) {
-    params.addExchange("Bitfinex", params.bitfinexFees, true, true);
-    getQuote[index] = Bitfinex::getQuote;
-    getAvail[index] = Bitfinex::getAvail;
-    sendLongOrder[index] = Bitfinex::sendLongOrder;
-    sendShortOrder[index] = Bitfinex::sendShortOrder;
-    isOrderComplete[index] = Bitfinex::isOrderComplete;
-    getActivePos[index] = Bitfinex::getActivePos;
-    getLimitPrice[index] = Bitfinex::getLimitPrice;
-    if (params.useDatabase) {
-      dbTableName[index] = "bitfinex";
-      createTable(dbTableName[index], params);
-    }
-    index++;
-  }
   if (params.okcoinApi.empty() == false || params.demoMode == true) {
     params.addExchange("OKCoin", params.okcoinFees, false, true);
     getQuote[index] = OKCoin::getQuote;
