@@ -1,3 +1,21 @@
+# Created by https://www.gitignore.io/api/cmake
+
+### CMake ###
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+
+# End of https://www.gitignore.io/api/cmake
+
+cmake_install.cmake
+.idea
+blackbird.cbp
+
 *.log
 *.csv
 *.o

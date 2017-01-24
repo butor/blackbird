@@ -7,27 +7,27 @@
 
 namespace OKCoin {
 
-double getQuote(Parameters& params, bool isBid);
+    double getQuote(Parameters &params, bool isBid);
 
-double getAvail(Parameters& params, std::string currency);
+    double getAvail(Parameters &params, std::string currency);
 
-int sendLongOrder(Parameters& params, std::string direction, double quantity, double price);
+    int sendLongOrder(Parameters &params, std::string direction, double quantity, double price);
 
-int sendShortOrder(Parameters& params, std::string direction, double quantity, double price);
+    int sendShortOrder(Parameters &params, std::string direction, double quantity, double price);
 
-bool isOrderComplete(Parameters& params, int orderId);
+    bool isOrderComplete(Parameters &params, int orderId);
 
-double getActivePos(Parameters& params);
+    double getActivePos(Parameters &params);
 
-double getLimitPrice(Parameters& params, double volume, bool isBid);
+    double getLimitPrice(Parameters &params, double volume, bool isBid);
 
-json_t* authRequest(Parameters& params, std::string url, std::string signature, std::string content);
+    json_t *authRequest(Parameters &params, std::string url, std::string signature, std::string content);
 
-void getBorrowInfo(Parameters& params);
+    void getBorrowInfo(Parameters &params);
 
-int borrowBtc(Parameters& params, double amount);
+    int borrowBtc(Parameters &params, double amount);
 
-void repayBtc(Parameters& params, int borrowId);
+    void repayBtc(Parameters &params, int borrowId);
 
 }
 
