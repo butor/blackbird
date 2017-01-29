@@ -3,6 +3,7 @@
 
 #include <string>
 #include <time.h>
+#include <unistd.h>
 
 time_t getTime_t(int y, int m, int d, int h, int n, int s);
 

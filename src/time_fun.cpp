@@ -1,5 +1,4 @@
 #include <iostream>
-#include <time.h>
 #include "time_fun.h"
 
 time_t getTime_t(int y, int m, int d, int h, int n, int s) {

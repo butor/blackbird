@@ -8,11 +8,9 @@
 #include <curl/curl.h>
 #include <string.h>
 #include <mysql.h>
-#include "utils/base64.h"
 #include "bitcoin.h"
 #include "result.h"
 #include "time_fun.h"
-#include "curl_fun.h"
 #include "db_fun.h"
 #include "parameters.h"
 #include "check_entry_exit.h"

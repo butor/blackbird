@@ -4,10 +4,9 @@
 #include "parameters.h"
 #include <sstream>
 #include <iomanip>
-#include <iterator>
 #include <numeric>
 #include <cmath>
-
+#include <algorithm>
 
 template <typename T>
 static typename std::iterator_traits<T>::value_type compute_sd(T first, const T &last)

@@ -1,11 +1,9 @@
 #include <string.h>
-#include <iostream>
 #include <stdio.h>
 #include <unistd.h>
 #include <vector>
 #include <math.h>
 #include <sstream>
-#include <sys/time.h>
 #include "utils/base64.h"
 #include <iomanip>
 #include <openssl/sha.h>
