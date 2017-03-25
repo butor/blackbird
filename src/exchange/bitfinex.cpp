@@ -63,27 +63,27 @@ double getAvail(Parameters& params, std::string currency) {
   return availability;
 }
 
-int sendLongOrder(Parameters& params, std::string direction, double quantity, double price) {
+long sendLongOrder(Parameters& params, std::string direction, double quantity, double price) {
   return sendOrder(params, direction, quantity, price);
 }
 
-int sendShortOrder(Parameters& params, std::string direction, double quantity, double price) {
+long sendShortOrder(Parameters& params, std::string direction, double quantity, double price) {
   return sendOrder(params, direction, quantity, price);
 }
 
-int sendOrder(Parameters& params, std::string direction, double quantity, double price) {
+long sendOrder(Parameters& params, std::string direction, double quantity, double price) {
   *params.logFile << "<Bitfinex> Trying to send a \"" << direction << "\" limit order: " << quantity << "@$" << price << "..." << std::endl;
   std::ostringstream oss;
   oss << "\"symbol\":\"btcusd\", \"amount\":\"" << quantity << "\", \"price\":\"" << price << "\", \"exchange\":\"bitfinex\", \"side\":\"" << direction << "\", \"type\":\"limit\"";
   std::string options = oss.str();
   json_t* root = authRequest(params, "https://api.bitfinex.com/v1/order/new", "order/new", options);
-  int orderId = json_integer_value(json_object_get(root, "order_id"));
+  long orderId = json_integer_value(json_object_get(root, "order_id"));
   *params.logFile << "<Bitfinex> Done (order ID: " << orderId << ")\n" << std::endl;
   json_decref(root);
   return orderId;
 }
 
-bool isOrderComplete(Parameters& params, int orderId) {
+bool isOrderComplete(Parameters& params, long orderId) {
   if (orderId == 0) {
     return true;
   }

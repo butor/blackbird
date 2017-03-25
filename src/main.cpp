@@ -27,8 +27,8 @@
 // typedef declarations needed for the function arrays
 typedef double (*getQuoteType) (Parameters& params, bool isBid);
 typedef double (*getAvailType) (Parameters& params, std::string currency);
-typedef int (*sendOrderType) (Parameters& params, std::string direction, double quantity, double price);
-typedef bool (*isOrderCompleteType) (Parameters& params, int orderId);
+typedef long (*sendOrderType) (Parameters& params, std::string direction, double quantity, double price);
+typedef bool (*isOrderCompleteType) (Parameters& params, long orderId);
 typedef double (*getActivePosType) (Parameters& params);
 typedef double (*getLimitPriceType) (Parameters& params, double volume, bool isBid);
 
@@ -425,8 +425,8 @@ int main(int argc, char** argv) {
               res.maxSpread[res.idExchLong][res.idExchShort] = -1.0;
               res.minSpread[res.idExchLong][res.idExchShort] = 1.0;
               res.trailing[res.idExchLong][res.idExchShort] = 1.0;
-              int longOrderId = 0;
-              int shortOrderId = 0;
+              long longOrderId = 0;
+              long shortOrderId = 0;
               longOrderId = sendLongOrder[res.idExchLong](params, "buy", volumeLong, limPriceLong);
               shortOrderId = sendShortOrder[res.idExchShort](params, "sell", volumeShort, limPriceShort);
               logFile << "Waiting for the two orders to be filled..." << std::endl;
@@ -492,8 +492,8 @@ int main(int argc, char** argv) {
           res.priceLongOut = limPriceLong;
           res.priceShortOut = limPriceShort;
           res.printExitInfo(*params.logFile);
-          int longOrderId = 0;
-          int shortOrderId = 0;
+          long longOrderId = 0;
+          long shortOrderId = 0;
           logFile << std::setprecision(6) << "BTC exposure on " << params.exchName[res.idExchLong] << ": " << volumeLong << std::setprecision(2) << std::endl;
           logFile << std::setprecision(6) << "BTC exposure on " << params.exchName[res.idExchShort] << ": " << volumeShort << std::setprecision(2) << std::endl;
           logFile << std::endl;

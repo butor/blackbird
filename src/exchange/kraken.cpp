@@ -21,7 +21,7 @@ bool krakenGotLimPrice = false;
 
 namespace Kraken {
 
-static std::map<int, std::string> id_to_transaction;
+static std::map<long, std::string> id_to_transaction;
 
 double getQuote(Parameters& params, bool isBid) {
   bool GETRequest = false;
@@ -71,7 +71,7 @@ double getAvail(Parameters& params, std::string currency) {
   return available;
 }
 
-int sendLongOrder(Parameters& params, std::string direction, double quantity, double price) {
+long sendLongOrder(Parameters& params, std::string direction, double quantity, double price) {
   if (direction.compare("buy") != 0 && direction.compare("sell") != 0) {
     *params.logFile  << "<Kraken> Error: Neither \"buy\" nor \"sell\" selected" << std::endl;
     return 0;
@@ -90,14 +90,14 @@ int sendLongOrder(Parameters& params, std::string direction, double quantity, do
     exit(0);
   }
   std::string txid = json_string_value(json_array_get(json_object_get(root, "txid"), 0));
-  int max_id = id_to_transaction.size();
+  long max_id = id_to_transaction.size();
   id_to_transaction[max_id] = txid;
   *params.logFile << "<Kraken> Done (transaction ID: " << txid << ")\n" << std::endl;
   json_decref(root);
   return max_id;
 }
 
-bool isOrderComplete(Parameters& params, int orderId) {
+bool isOrderComplete(Parameters& params, long orderId) {
   json_t* root = authRequest(params, "https://api.kraken.com", "/0/private/OpenOrders");
   // no open order: return true
   root = json_object_get(json_object_get(root, "result"), "open");

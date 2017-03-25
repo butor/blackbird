@@ -16,9 +16,9 @@ double getQuote(Parameters& params, bool isBid);
 
 double getAvail(Parameters& params, std::string currency);
 
-int sendLongOrder(Parameters& params, std::string direction, double quantity, double price);
+long sendLongOrder(Parameters& params, std::string direction, double quantity, double price);
 
-bool isOrderComplete(Parameters& params, int orderId);
+bool isOrderComplete(Parameters& params, long orderId);
 
 double getActivePos(Parameters& params);
 
