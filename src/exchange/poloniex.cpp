@@ -37,17 +37,17 @@ double getAvail(Parameters& params, std::string currency) {
   return 0.0;
 }
 
-int sendLongOrder(Parameters& params, std::string direction, double quantity, double price) {
+long sendLongOrder(Parameters& params, std::string direction, double quantity, double price) {
   // TODO
   return 0;
 }
 
-int sendShortOrder(Parameters& params, std::string direction, double quantity, double price) {
+long sendShortOrder(Parameters& params, std::string direction, double quantity, double price) {
   // TODO
   return 0;
 }
 
-bool isOrderComplete(Parameters& params, int orderId) {
+bool isOrderComplete(Parameters& params, long orderId) {
   // TODO
   return false;
 }
