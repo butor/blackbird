@@ -63,33 +63,30 @@ double getAvail(Parameters& params, std::string currency) {
   return availability;
 }
 
-int sendLongOrder(Parameters& params, std::string direction, double quantity, double price) {
+std::string sendLongOrder(Parameters& params, std::string direction, double quantity, double price) {
   return sendOrder(params, direction, quantity, price);
 }
 
-int sendShortOrder(Parameters& params, std::string direction, double quantity, double price) {
+std::string sendShortOrder(Parameters& params, std::string direction, double quantity, double price) {
   return sendOrder(params, direction, quantity, price);
 }
 
-int sendOrder(Parameters& params, std::string direction, double quantity, double price) {
+std::string sendOrder(Parameters& params, std::string direction, double quantity, double price) {
   *params.logFile << "<Bitfinex> Trying to send a \"" << direction << "\" limit order: " << quantity << "@$" << price << "..." << std::endl;
   std::ostringstream oss;
   oss << "\"symbol\":\"btcusd\", \"amount\":\"" << quantity << "\", \"price\":\"" << price << "\", \"exchange\":\"bitfinex\", \"side\":\"" << direction << "\", \"type\":\"limit\"";
   std::string options = oss.str();
   json_t* root = authRequest(params, "https://api.bitfinex.com/v1/order/new", "order/new", options);
-  int orderId = json_integer_value(json_object_get(root, "order_id"));
+  auto orderId = std::to_string(json_integer_value(json_object_get(root, "order_id")));
   *params.logFile << "<Bitfinex> Done (order ID: " << orderId << ")\n" << std::endl;
   json_decref(root);
   return orderId;
 }
 
-bool isOrderComplete(Parameters& params, int orderId) {
-  if (orderId == 0) {
-    return true;
-  }
-  std::ostringstream oss;
-  oss << "\"order_id\":" << orderId;
-  std::string options = oss.str();
+bool isOrderComplete(Parameters& params, std::string orderId) {
+  if (orderId == "0") return true;
+
+  auto options =  "\"order_id\":" + orderId;
   json_t* root = authRequest(params, "https://api.bitfinex.com/v1/order/status", "order/status", options);
   bool isComplete = json_is_false(json_object_get(root, "is_live"));
   json_decref(root);

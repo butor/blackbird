@@ -27,8 +27,8 @@
 // typedef declarations needed for the function arrays
 typedef double (*getQuoteType) (Parameters& params, bool isBid);
 typedef double (*getAvailType) (Parameters& params, std::string currency);
-typedef int (*sendOrderType) (Parameters& params, std::string direction, double quantity, double price);
-typedef bool (*isOrderCompleteType) (Parameters& params, int orderId);
+typedef std::string (*sendOrderType) (Parameters& params, std::string direction, double quantity, double price);
+typedef bool (*isOrderCompleteType) (Parameters& params, std::string orderId);
 typedef double (*getActivePosType) (Parameters& params);
 typedef double (*getLimitPriceType) (Parameters& params, double volume, bool isBid);
 
@@ -250,6 +250,11 @@ int main(int argc, char** argv) {
                      return tmp;
                    } );
 
+  // Check for restore.txt to see if the program exited with an open position.
+  Result res;
+  res.reset();
+  bool inMarket = res.loadPartialResult("restore.txt");
+
   // write the balances into the log file
   for (int i = 0; i < numExch; ++i) {
     logFile << "   " << params.exchName[i] << ":\t";
@@ -260,7 +265,7 @@ int main(int argc, char** argv) {
     } else {
       logFile << balance[i].usd << " USD\t" << std::setprecision(6) << balance[i].btc  << std::setprecision(2) << " BTC" << std::endl;
     }
-    if (balance[i].btc > 0.0300) {
+    if (balance[i].btc > 0.0050 && !inMarket) {
       logFile << "ERROR: All BTC accounts must be empty before starting Blackbird" << std::endl;
       return -1;
     }
@@ -288,10 +293,8 @@ int main(int argc, char** argv) {
   if (!params.verbose) {
     logFile << "Running..." << std::endl;
   }
-  bool inMarket = false;
+
   int resultId = 0;
-  Result res;
-  res.reset();
   unsigned currIteration = 0;
   bool stillRunning = true;
   time_t currTime;
@@ -422,10 +425,9 @@ int main(int argc, char** argv) {
               res.maxSpread[res.idExchLong][res.idExchShort] = -1.0;
               res.minSpread[res.idExchLong][res.idExchShort] = 1.0;
               res.trailing[res.idExchLong][res.idExchShort] = 1.0;
-              int longOrderId = 0;
-              int shortOrderId = 0;
-              longOrderId = sendLongOrder[res.idExchLong](params, "buy", volumeLong, limPriceLong);
-              shortOrderId = sendShortOrder[res.idExchShort](params, "sell", volumeShort, limPriceShort);
+
+              auto longOrderId = sendLongOrder[res.idExchLong](params, "buy", volumeLong, limPriceLong);
+              auto shortOrderId = sendShortOrder[res.idExchShort](params, "sell", volumeShort, limPriceShort);
               logFile << "Waiting for the two orders to be filled..." << std::endl;
               sleep(5.0);
               bool isLongOrderComplete = isOrderComplete[res.idExchLong](params, longOrderId);
@@ -442,8 +444,13 @@ int main(int argc, char** argv) {
                 }
               }
               logFile << "Done" << std::endl;
-              longOrderId = 0;
-              shortOrderId = 0;
+
+              // Store the partial result to file in case
+              // the program exits before closing the position.
+              res.savePartialResult("restore.txt");
+
+              longOrderId  = "0";
+              shortOrderId = "0";
               break;
             }
           }
@@ -484,13 +491,12 @@ int main(int argc, char** argv) {
           res.priceLongOut = limPriceLong;
           res.priceShortOut = limPriceShort;
           res.printExitInfo(*params.logFile);
-          int longOrderId = 0;
-          int shortOrderId = 0;
+
           logFile << std::setprecision(6) << "BTC exposure on " << params.exchName[res.idExchLong] << ": " << volumeLong << std::setprecision(2) << std::endl;
           logFile << std::setprecision(6) << "BTC exposure on " << params.exchName[res.idExchShort] << ": " << volumeShort << std::setprecision(2) << std::endl;
           logFile << std::endl;
-          longOrderId = sendLongOrder[res.idExchLong](params, "sell", fabs(btcUsed[res.idExchLong]), limPriceLong);
-          shortOrderId = sendShortOrder[res.idExchShort](params, "buy", fabs(btcUsed[res.idExchShort]), limPriceShort);
+          auto longOrderId = sendLongOrder[res.idExchLong](params, "sell", fabs(btcUsed[res.idExchLong]), limPriceLong);
+          auto shortOrderId = sendShortOrder[res.idExchShort](params, "buy", fabs(btcUsed[res.idExchShort]), limPriceShort);
           logFile << "Waiting for the two orders to be filled..." << std::endl;
           sleep(5.0);
           bool isLongOrderComplete = isOrderComplete[res.idExchLong](params, longOrderId);
@@ -507,8 +513,8 @@ int main(int argc, char** argv) {
             }
           }
           logFile << "Done\n" << std::endl;
-          longOrderId = 0;
-          shortOrderId = 0;
+          longOrderId  = "0";
+          shortOrderId = "0";
           inMarket = false;
           for (int i = 0; i < numExch; ++i) {
             balance[i].usdAfter = getAvail[i](params, "usd");
@@ -539,6 +545,10 @@ int main(int argc, char** argv) {
             logFile << "Email sent" << std::endl;
           }
           res.reset();
+          // Remove restore.txt since this trade is done.
+          std::ofstream resFile;
+          resFile.open("restore.txt", std::ofstream::trunc);
+          resFile.close();
         }
       }
       if (params.verbose) logFile << '\n';

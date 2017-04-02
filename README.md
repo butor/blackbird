@@ -29,7 +29,7 @@ Unlike other Bitcoin arbitrage systems, Blackbird doesn't sell but actually _sho
 
 2. The strategy doesn't need to transfer funds (USD or BTC) between Bitcoin exchanges. The buy/sell and sell/buy trading activities are done in parallel on two different exchanges, independently. Advantage: no need to deal with transfer latency issues.
 
-More details about _short selling_ and _market neutrality_ can be found on <a href="https://github.com/butor/blackbird/issues/100" target="_blank">issue __#100__</a>.
+More details about _short selling_ and _market neutrality_ can be found on <a href="https://github.com/butor/blackbird/issues/100" target="_blank">issue #100</a>.
 
 ### Disclaimer
 
@@ -55,19 +55,24 @@ It is never entirely safe to just tell Blackbird to use, say, $25 per exchange. 
 
 Note: on Bitfinex, your money has to be available on the _Margin_ account.
 
-#### Covered Exchanges
+#### Implemented Exchanges
 
-| Exchange | Long | Short | Implemented | Tested  | Note |
-| -------- |:----:|:-----:|:-----------:|:-------:| ---- |
-| <a href="https://www.bitfinex.com" target="_blank">Bitfinex</a> | ✓ | ✓ | ✓ | ✓ | |
-| <a href="https://www.okcoin.com" target="_blank">OKCoin</a> | ✓ |  | ✓ | ✓ |their API now offers short selling: <a href="https://www.okcoin.com/about/rest_api.do" target="_blank">link here</a> |
-| <a href="https://www.bitstamp.net" target="_blank">Bitstamp</a> | ✓ |  | ✓ | ✓ | |
-| <a href="https://gemini.com" target="_blank">Gemini</a> | ✓ |  | ✓ | ✓ | |
-| <a href="https://www.kraken.com" target="_blank">Kraken</a> | ✓ |  | ✓ |  | Validation in progress |
-| <a href="https://poloniex.com" target="_blank">Poloniex</a> | ✓ | ✓ |  |  | | 
-| <a href="https://btc-e.com" target="_blank">BTC-e</a> | ✓ |  |  |  | |
-| <a href="https://www.itbit.com" target="_blank">itBit</a> | ✓ |  |  |  | |
+| Exchange | Long | Short | Tested | Note |
+| -------- |:----:|:-----:|:------:| ---- |
+| <a href="https://www.bitfinex.com" target="_blank">Bitfinex</a> | ✓ | ✓ | ✓ | |
+| <a href="https://www.okcoin.com" target="_blank">OKCoin</a> | ✓ |  | ✓ |their API now offers short selling: <a href="https://www.okcoin.com/about/rest_api.do" target="_blank">link here</a> |
+| <a href="https://www.bitstamp.net" target="_blank">Bitstamp</a> | ✓ |  | ✓ | |
+| <a href="https://gemini.com" target="_blank">Gemini</a> | ✓ |  | ✓ | |
+| <a href="https://www.kraken.com" target="_blank">Kraken</a> | ✓ |  | | Validation in progress |
 
+#### Potential Exchanges
+
+| Exchange | Long | Short | Note |
+| -------- |:----:|:-----:| ---- |
+| <a href="https://poloniex.com" target="_blank">Poloniex</a> | ✓ | ✓ | BTC/USD trading not supported, BTC/USDT margin trading not supported |
+| <a href="https://www.gdax.com" target="_blank">GDAX</a> | ✓ | ✓ |  |
+| <a href="https://btc-e.com" target="_blank">BTC-e</a> | ✓ |  |  |
+| <a href="https://www.itbit.com" target="_blank">itBit</a> | ✓ |  |  |
 
 #### Credentials
 
@@ -130,29 +135,43 @@ If all goes well this produces a Blackbird executable in the project directory.
 
 #### Ubuntu (Amazon EC2 compatible)
 
-Run the following commands:
+1. Run the following commands:
 
-    sudo apt-get install libssl-dev libjansson-dev libcurl4-openssl-dev libsqlite3-dev sendemail make gcc g++
-    mkdir blackbird
-    cd blackbird
-    git clone --recursive  git://github.com/butor/blackbird.git .
-    make
+  ```
+  sudo apt-get install libssl-dev libjansson-dev libcurl4-openssl-dev libsqlite3-dev sendemail make gcc g++
+  mkdir blackbird
+  cd blackbird
+  git clone --recursive  git://github.com/butor/blackbird.git .
+  make
+  ```
 
-#### Run the software
+2. Run the software, by typing:
 
-Start it by typing:
+  ```
+  ./blackbird
+  ```
 
-    ./blackbird
+#### Docker
 
-### Tasks And Issues
+1. Download and install Docker [here](https://www.docker.com/).
 
-Please check the <a href="https://github.com/butor/blackbird/issues" target="_blank">issues page</a> for the current tasks and issues. If you face any problems with Blackbird please open a new issue on that page.
+2. Build the container:
+
+  ```
+  docker build -t blackbird .
+  ```
+
+3. Mount your configuration and run the container (OSX/Linux):
+
+  ```
+  docker run -v $(pwd)/blackbird.conf:/blackbird/blackbird.conf -it blackbird /blackbird/blackbird
+  ```
 
 ### Contact
 
 * If you found a bug, please open a new <a href="https://github.com/butor/blackbird/issues" target="_blank">issue</a> with the label _bug_
 * If you have a general question or have troubles running Blackbird, you can open a new  <a href="https://github.com/butor/blackbird/issues" target="_blank">issue</a> with the label _question_ or _help wanted_
-* For anything else you can contact me at julien.hamilton@gmail.com
+* For anything else you can contact the author at julien.hamilton@gmail.com
 
 ### Log Output Example
 

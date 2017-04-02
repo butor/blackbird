@@ -57,7 +57,7 @@ double getAvail(Parameters& params, std::string currency)
   return availability;
 }
 
-int sendLongOrder(Parameters& params, std::string direction, double quantity, double price) {
+std::string sendLongOrder(Parameters& params, std::string direction, double quantity, double price) {
   // signature
   std::ostringstream oss;
   oss << "amount=" << quantity << "&api_key=" << params.okcoinApi << "&price=" << price << "&symbol=btc_usd&type=" << direction << "&secret_key=" << params.okcoinSecret;
@@ -69,13 +69,13 @@ int sendLongOrder(Parameters& params, std::string direction, double quantity, do
   std::string content = oss.str();
   *params.logFile << "<OKCoin> Trying to send a \"" << direction << "\" limit order: " << quantity << "@$" << price << "..." << std::endl;
   json_t *root = authRequest(params, "https://www.okcoin.com/api/v1/trade.do", signature, content);
-  int orderId = json_integer_value(json_object_get(root, "order_id"));
+  auto orderId = std::to_string(json_integer_value(json_object_get(root, "order_id")));
   *params.logFile << "<OKCoin> Done (order ID: " << orderId << ")\n" << std::endl;
   json_decref(root);
   return orderId;
 }
 
-int sendShortOrder(Parameters& params, std::string direction, double quantity, double price) {
+std::string sendShortOrder(Parameters& params, std::string direction, double quantity, double price) {
   // TODO
   // Unlike Bitfinex and Poloniex, on OKCoin the borrowing phase has to be done
   // as a separated step before being able to short sell.
@@ -87,12 +87,12 @@ int sendShortOrder(Parameters& params, std::string direction, double quantity, d
   //  3. <wait for the spread to close>       |
   //  4. buy back the bitcoins on the market  | sendShortOrder("buy")
   //  5. repay the bitcoins to the lender     | repayBtc(borrowId)
-  return 0;
+  return "0";
 }
 
-bool isOrderComplete(Parameters& params, int orderId)
+bool isOrderComplete(Parameters& params, std::string orderId)
 {
-  if (orderId == 0) return true;
+  if (orderId == "0") return true;
 
   // signature
   std::ostringstream oss;

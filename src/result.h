@@ -42,6 +42,8 @@ struct Result
   void printEntryInfo(std::ostream &logFile)  const;
   void printExitInfo(std::ostream  &logFile)  const;
   void reset();
+  bool loadPartialResult(std::string filename);
+  void savePartialResult(std::string filename);
 };
 
 #endif

@@ -1,6 +1,8 @@
 #include "result.h"
 #include "time_fun.h"
 #include <type_traits>
+#include <iostream>
+#include <fstream>
 
 
 double Result::targetPerfLong() const
@@ -60,10 +62,69 @@ void Result::reset()
 {
   typedef std::remove_reference< decltype(minSpread[0][0]) >::type arr2d_t;
   auto arr2d_size = sizeof(minSpread) / sizeof(arr2d_t);
-  
+
   Result tmp {};
   std::swap(tmp, *this);
   std::fill_n(reinterpret_cast<arr2d_t *>(minSpread), arr2d_size, 1.0);
   std::fill_n(reinterpret_cast<arr2d_t *>(maxSpread), arr2d_size, -1.0);
   std::fill_n(reinterpret_cast<arr2d_t *>(trailing), arr2d_size, -1.0);
+}
+
+bool Result::loadPartialResult(std::string filename){
+  // tries to load the state from a previous position.
+  std::ifstream resFile;
+  resFile.open(filename, std::ifstream::ate);
+  if(resFile.is_open() && (resFile.tellg() != 0)){
+    resFile.seekg(0);
+    resFile >> id;
+    resFile >> idExchLong;
+    resFile >> idExchShort;
+    resFile >> exchNameLong;
+    resFile >> exchNameShort;
+    resFile >> exposure;
+    resFile >> feesLong;
+    resFile >> feesShort;
+    resFile >> entryTime;
+    resFile >> spreadIn;
+    resFile >> priceLongIn;
+    resFile >> priceShortIn;
+    resFile >> usdTotBalanceBefore;
+    resFile >> exitTarget;
+
+    resFile >> maxSpread[idExchLong][idExchShort];
+    resFile >> minSpread[idExchLong][idExchShort];
+    resFile >> trailing[idExchLong][idExchShort];
+    resFile >> trailingWaitCount[idExchLong][idExchShort];
+
+    resFile.close();
+    return true;
+  }
+  return false;
+}
+
+void Result::savePartialResult(std::string filename){
+  std::ofstream resFile;
+  resFile.open(filename, std::ofstream::trunc);
+  resFile << id << std::endl;
+  resFile << idExchLong << std::endl;
+  resFile << idExchShort << std::endl;
+  resFile << exchNameLong << std::endl;
+  resFile << exchNameShort << std::endl;
+  resFile << exposure << std::endl;
+  resFile << feesLong << std::endl;
+  resFile << feesShort << std::endl;
+  resFile << entryTime << std::endl;
+  resFile << spreadIn << std::endl;
+  resFile << priceLongIn << std::endl;
+  resFile << priceShortIn << std::endl;
+  resFile << usdTotBalanceBefore << std::endl;
+  resFile << exitTarget << std::endl;
+
+  resFile << maxSpread[idExchLong][idExchShort] << std::endl;
+  resFile << minSpread[idExchLong][idExchShort] << std::endl;
+  resFile << trailing[idExchLong][idExchShort] << std::endl;
+  resFile << trailingWaitCount[idExchLong][idExchShort] << std::endl;
+
+  resFile.flush();
+  resFile.close();
 }

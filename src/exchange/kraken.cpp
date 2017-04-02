@@ -21,8 +21,6 @@ bool krakenGotLimPrice = false;
 
 namespace Kraken {
 
-static std::map<int, std::string> id_to_transaction;
-
 double getQuote(Parameters& params, bool isBid) {
   bool GETRequest = false;
   json_t* root;
@@ -71,7 +69,7 @@ double getAvail(Parameters& params, std::string currency) {
   return available;
 }
 
-int sendLongOrder(Parameters& params, std::string direction, double quantity, double price) {
+std::string sendLongOrder(Parameters& params, std::string direction, double quantity, double price) {
   if (direction.compare("buy") != 0 && direction.compare("sell") != 0) {
     *params.logFile  << "<Kraken> Error: Neither \"buy\" nor \"sell\" selected" << std::endl;
     return 0;
@@ -90,14 +88,12 @@ int sendLongOrder(Parameters& params, std::string direction, double quantity, do
     exit(0);
   }
   std::string txid = json_string_value(json_array_get(json_object_get(root, "txid"), 0));
-  int max_id = id_to_transaction.size();
-  id_to_transaction[max_id] = txid;
   *params.logFile << "<Kraken> Done (transaction ID: " << txid << ")\n" << std::endl;
   json_decref(root);
-  return max_id;
+  return txid;
 }
 
-bool isOrderComplete(Parameters& params, int orderId) {
+bool isOrderComplete(Parameters& params, std::string orderId) {
   json_t* root = authRequest(params, "https://api.kraken.com", "/0/private/OpenOrders");
   // no open order: return true
   root = json_object_get(json_object_get(root, "result"), "open");
@@ -106,15 +102,14 @@ bool isOrderComplete(Parameters& params, int orderId) {
     return true;
   }
   *params.logFile << json_dumps(root, 0) << std::endl;
-  std::string transaction_id = id_to_transaction[orderId];
-  root = json_object_get(root, transaction_id.c_str());
+  root = json_object_get(root, orderId.c_str());
   // open orders exist but specific order not found: return true
   if (json_object_size(root) == 0) {
-    *params.logFile << "<Kraken> Order " << transaction_id << " does not exist" << std::endl;
+    *params.logFile << "<Kraken> Order " << orderId << " does not exist" << std::endl;
     return true;
   // open orders exist and specific order was found: return false
   } else {
-    *params.logFile << "<Kraken> Order " << transaction_id << " still exists!" << std::endl;
+    *params.logFile << "<Kraken> Order " << orderId << " still exists!" << std::endl;
     return false;
   }
 }
@@ -234,4 +229,3 @@ json_t* authRequest(Parameters& params, std::string url, std::string request, st
 }
 
 }
-
