@@ -1,13 +1,14 @@
 # Blackbird Bitcoin Arbitrage Makefile
 
 override INC_DIR += -I ./src -I ./extern/sqlite3/include
-override LIB_DIR += -L .
+override LIB_DIR += -L . 
+
 CFLAGS   := -std=c99
 CXXFLAGS := -Wall -pedantic -std=c++11 -Wno-missing-braces
 LDFLAGS  := 
 LDLIBS   := -lsqlite3 -lcrypto -ljansson -lcurl
 CC       := gcc
-
+OSNAME	 := $(shell uname)
 
 EXEC = blackbird
 SOURCES = $(wildcard src/*.cpp) $(wildcard src/*/*.cpp)
@@ -16,6 +17,13 @@ OBJECTS = $(SOURCES:.cpp=.o)
 SQLITE3 = libsqlite3.a
 SQLITE3CLI = sqlite3
 SQLITE3LIBS :=
+
+ifeq ($(OSNAME),Darwin)
+override INC_DIR += -I /usr/local/opt/openssl/include
+override LIB_DIR += -L /usr/local/opt/openssl/lib
+CC       := gcc-4.8
+CXX      := c++-4.8
+endif
 
 ifndef VERBOSE
   Q := @
