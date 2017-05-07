@@ -6,4 +6,4 @@ blackbird
 blackbird.db
 sqlite3
 core
-
+*.sublime-*
