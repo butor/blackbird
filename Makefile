@@ -19,10 +19,8 @@ SQLITE3CLI = sqlite3
 SQLITE3LIBS :=
 
 ifeq ($(OSNAME),Darwin)
-override INC_DIR += -I /usr/local/opt/openssl/include
-override LIB_DIR += -L /usr/local/opt/openssl/lib
-CC       := gcc-4.8
-CXX      := c++-4.8
+override INC_DIR += -I /usr/local/opt/openssl/include -I /usr/local/opt/jansson/include/
+override LIB_DIR += -L /usr/local/opt/openssl/lib -L /usr/local/opt/jansson/lib/
 endif
 
 ifndef VERBOSE

@@ -177,6 +177,24 @@ If all goes well this produces a Blackbird executable in the project directory.
   docker run -v $(pwd)/blackbird.conf:/blackbird/blackbird.conf -it blackbird /blackbird/blackbird
   ```
 
+#### MacOS X (tested using MacOS X Sierra)
+
+1. Download and install Homebrew [here](https://brew.sh/index_es.html).
+
+2. Install gcc, jansson:
+
+  ```
+  brew install gcc jansson
+  ```
+
+  This will install an Homebrew-compiled version of GNU GCC. At the time of writing this is gcc 7.x
+
+3. Build blackbird using the Homebrew installed version of gcc. For example:
+
+  ```
+  CXX=g++-7 make
+  ```
+
 ### Contact
 
 * If you found a bug, please open a new <a href="https://github.com/butor/blackbird/issues" target="_blank">issue</a> with the label _bug_
