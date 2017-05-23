@@ -115,7 +115,7 @@ Parameter | Default Value | Description
 
 #### Getting and building the software
 
-You need the following libraries: <a href="https://www.openssl.org/docs/crypto/crypto.html" target="_blank">Crypto</a>, <a href="http://www.digip.org/jansson" target="_blank">Jansson</a>, <a href="http://curl.haxx.se" target="_blank">cURL</a>, <a href="http://www.sqlite.org" target="_blank">SQLite3</a> and <a href="http://caspian.dotconf.net/menu/Software/SendEmail" target="_blank">sendEmail</a>. Usually this is what you need to install:
+You need the following libraries: <a href="https://www.openssl.org/source" target="_blank">OpenSSL</a>, <a href="http://www.digip.org/jansson" target="_blank">Jansson</a>, <a href="http://curl.haxx.se" target="_blank">cURL</a>, <a href="http://www.sqlite.org" target="_blank">SQLite3</a> and <a href="http://caspian.dotconf.net/menu/Software/SendEmail" target="_blank">sendEmail</a>. Usually this is what you need to install:
 
 ```
 libssl-dev

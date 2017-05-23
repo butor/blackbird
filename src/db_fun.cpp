@@ -1,32 +1,33 @@
 #include "parameters.h"
-#include "sqlite3.h"
+#include "unique_sqlite.hpp"
+
 #include <iostream>
-#include <sstream>
-#include <memory>
+#include <string>
 
 
 // define some helper overloads to ease sqlite resource management
-using scoped_sqlite3err = std::unique_ptr<char, decltype(&sqlite3_free)>;
-static sqlite3* sqlite3_open(const char *filename, int &err)
+namespace
 {
-  sqlite3 *db;
-  err = sqlite3_open(filename, &db);
-  return db;
-}
-
-typedef int (*sqlite3_callback)(void*, int, char**, char**);
-static char* sqlite3_exec(sqlite3 *S, const char *sql, sqlite3_callback cb, void *udata, int &err)
+template <typename UNIQUE_T>
+class sqlite_proxy
 {
-  char *errmsg;
-  err = sqlite3_exec(S, sql, cb, udata, &errmsg);
-  return errmsg;
-}
+  typename UNIQUE_T::pointer S;
+  UNIQUE_T &owner;
 
+public:
+  sqlite_proxy(UNIQUE_T &owner) : S(nullptr), owner(owner)
+  {}
+  ~sqlite_proxy()                           { owner.reset(S); }
+  operator typename UNIQUE_T::pointer* ()   { return &S;      }
+};
+template <typename T, typename deleter>
+sqlite_proxy< std::unique_ptr<T, deleter> >
+acquire(std::unique_ptr<T, deleter> &owner) { return owner;   }
+}
 
 int createDbConnection(Parameters& params)
 {
-  int res;
-  params.dbConn.reset( sqlite3_open(params.dbFile.c_str(), res) );
+  int res = sqlite3_open(params.dbFile.c_str(), acquire(params.dbConn));
   
   if (res != SQLITE_OK)
     std::cerr << sqlite3_errmsg(params.dbConn.get()) << std::endl;
@@ -36,23 +37,24 @@ int createDbConnection(Parameters& params)
 
 int createTable(std::string exchangeName, Parameters& params)
 {
-  std::stringstream query;
-  query << "CREATE TABLE IF NOT EXISTS `" << exchangeName << "` (Datetime DATETIME NOT NULL, bid DECIMAL(8, 2), ask DECIMAL(8, 2));";
-  int res;
-  scoped_sqlite3err errmsg(sqlite3_exec(params.dbConn.get(), query.str().c_str(), nullptr, nullptr, res),
-                           sqlite3_free);
+  std::string query = "CREATE TABLE IF NOT EXISTS `" + exchangeName +
+                      "` (Datetime DATETIME NOT NULL, bid DECIMAL(8, 2), ask DECIMAL(8, 2));";
+  unique_sqlerr errmsg;
+  int res = sqlite3_exec(params.dbConn.get(), query.c_str(), nullptr, nullptr, acquire(errmsg));
   if (res != SQLITE_OK)
     std::cerr << errmsg.get() << std::endl;
 
   return res;
 }
 
-int addBidAskToDb(std::string exchangeName, std::string datetime, double bid, double ask, Parameters& params) {
-  std::stringstream query;
-  query << "INSERT INTO `" << exchangeName << "` VALUES ('" << datetime << "'," << bid << "," << ask << ");";
-  int res;
-  scoped_sqlite3err errmsg(sqlite3_exec(params.dbConn.get(), query.str().c_str(), nullptr, nullptr, res),
-                           sqlite3_free);
+int addBidAskToDb(std::string exchangeName, std::string datetime, double bid, double ask, Parameters& params)
+{
+  std::string query = "INSERT INTO `" + exchangeName +
+                      "` VALUES ('"   + datetime +
+                      "'," + std::to_string(bid) +
+                      "," + std::to_string(ask) + ");";
+  unique_sqlerr errmsg;
+  int res = sqlite3_exec(params.dbConn.get(), query.c_str(), nullptr, nullptr, acquire(errmsg));
   if (res != SQLITE_OK)
     std::cerr << errmsg.get() << std::endl;
 

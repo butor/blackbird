@@ -1,18 +1,16 @@
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 
+#include "unique_sqlite.hpp"
+
 #include <fstream>
 #include <string>
 #include <vector>
-#include <memory>
 #include <curl/curl.h>
 
 
-struct sqlite3;
-using sqlite3_deleter = int (*)(sqlite3 *);
-
-struct Parameters {
-
+struct Parameters
+{
   std::vector<std::string> exchName;
   std::vector<double> fees;
   std::vector<bool> canShort;
@@ -76,7 +74,7 @@ struct Parameters {
   std::string receiverAddress;
 
   std::string dbFile;
-  std::unique_ptr<sqlite3, sqlite3_deleter> dbConn;
+  unique_sqlite dbConn;
 
   Parameters(std::string fileName);
 

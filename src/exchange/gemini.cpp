@@ -3,10 +3,10 @@
 #include "curl_fun.h"
 #include "utils/restapi.h"
 #include "utils/base64.h"
+#include "unique_json.hpp"
 
 #include "openssl/sha.h"
 #include "openssl/hmac.h"
-#include "jansson.h"
 #include <unistd.h>
 #include <math.h>
 #include <sstream>
@@ -25,26 +25,25 @@ static RestApi& queryHandle(Parameters &params)
 quote_t getQuote(Parameters &params)
 {
   auto &exchange = queryHandle(params);
-  json_t *root = exchange.getRequest("/v1/book/BTCUSD");
-  const char *quote = json_string_value(json_object_get(json_array_get(json_object_get(root, "bids"), 0), "price"));
+  unique_json root { exchange.getRequest("/v1/book/BTCUSD") };
+  const char *quote = json_string_value(json_object_get(json_array_get(json_object_get(root.get(), "bids"), 0), "price"));
   auto bidValue = quote ? std::stod(quote) : 0.0;
 
-  quote = json_string_value(json_object_get(json_array_get(json_object_get(root, "asks"), 0), "price"));
+  quote = json_string_value(json_object_get(json_array_get(json_object_get(root.get(), "asks"), 0), "price"));
   auto askValue = quote ? std::stod(quote) : 0.0;
 
-  json_decref(root);
   return std::make_pair(bidValue, askValue);
 }
 
 double getAvail(Parameters& params, std::string currency) {
-  json_t* root = authRequest(params, "https://api.gemini.com/v1/balances", "balances", "");
-  while (json_object_get(root, "message") != NULL) {
+  unique_json root { authRequest(params, "https://api.gemini.com/v1/balances", "balances", "") };
+  while (json_object_get(root.get(), "message") != NULL) {
     sleep(1.0);
-    *params.logFile << "<Gemini> Error with JSON: " << json_dumps(root, 0) << ". Retrying..." << std::endl;
-    root = authRequest(params, "https://api.gemini.com/v1/balances", "balances", "");
+    *params.logFile << "<Gemini> Error with JSON: " << json_dumps(root.get(), 0) << ". Retrying..." << std::endl;
+    root.reset(authRequest(params, "https://api.gemini.com/v1/balances", "balances", ""));
   }
   // go through the list
-  size_t arraySize = json_array_size(root);
+  size_t arraySize = json_array_size(root.get());
   double availability = 0.0;
   const char* returnedText;
   std::string currencyAllCaps;
@@ -54,9 +53,9 @@ double getAvail(Parameters& params, std::string currency) {
     currencyAllCaps = "USD";
   }
   for (size_t i = 0; i < arraySize; i++) {
-    std::string tmpCurrency = json_string_value(json_object_get(json_array_get(root, i), "currency"));
+    std::string tmpCurrency = json_string_value(json_object_get(json_array_get(root.get(), i), "currency"));
     if (tmpCurrency.compare(currencyAllCaps.c_str()) == 0) {
-      returnedText = json_string_value(json_object_get(json_array_get(root, i), "amount"));
+      returnedText = json_string_value(json_object_get(json_array_get(root.get(), i), "amount"));
       if (returnedText != NULL) {
         availability = atof(returnedText);
       } else {
@@ -65,7 +64,7 @@ double getAvail(Parameters& params, std::string currency) {
       }
     }
   }
-  json_decref(root);
+
   return availability;
 }
 
@@ -76,10 +75,9 @@ std::string sendLongOrder(Parameters& params, std::string direction, double quan
   std::ostringstream oss;
   oss << "\"symbol\":\"BTCUSD\", \"amount\":\"" << quantity << "\", \"price\":\"" << price << "\", \"side\":\"" << direction << "\", \"type\":\"exchange limit\"";
   std::string options = oss.str();
-  json_t* root = authRequest(params, "https://api.gemini.com/v1/order/new", "order/new", options);
-  std::string orderId = json_string_value(json_object_get(root, "order_id"));
+  unique_json root { authRequest(params, "https://api.gemini.com/v1/order/new", "order/new", options) };
+  std::string orderId = json_string_value(json_object_get(root.get(), "order_id"));
   *params.logFile << "<Gemini> Done (order ID: " << orderId << ")\n" << std::endl;
-  json_decref(root);
   return orderId;
 }
 
@@ -87,10 +85,8 @@ bool isOrderComplete(Parameters& params, std::string orderId) {
   if (orderId == "0") return true;
 
   auto options = "\"order_id\":" + orderId;
-  json_t* root = authRequest(params, "https://api.gemini.com/v1/order/status", "order/status", options);
-  bool isComplete = json_is_false(json_object_get(root, "is_live"));
-  json_decref(root);
-  return isComplete;
+  unique_json root { authRequest(params, "https://api.gemini.com/v1/order/status", "order/status", options) };
+  return json_is_false(json_object_get(root.get(), "is_live"));
 }
 
 double getActivePos(Parameters& params) {
@@ -100,14 +96,14 @@ double getActivePos(Parameters& params) {
 double getLimitPrice(Parameters& params, double volume, bool isBid)
 {
   auto &exchange = queryHandle(params);
-  json_t* root = exchange.getRequest("/v1/book/btcusd");
-  auto bidask = json_object_get(root, isBid ? "bids" : "asks");
+  unique_json root { exchange.getRequest("/v1/book/btcusd") };
+  auto bidask = json_object_get(root.get(), isBid ? "bids" : "asks");
   
   // loop on volume
   *params.logFile << "<Gemini> Looking for a limit price to fill "
                   << std::setprecision(6) << fabs(volume) << " BTC...\n";
   double tmpVol = 0.0;
-  double p;
+  double p = 0.0;
   double v;
   int i = 0;
   while (tmpVol < fabs(volume) * params.orderBookFactor)
@@ -120,10 +116,8 @@ double getLimitPrice(Parameters& params, double volume, bool isBid)
     tmpVol += v;
     i++;
   }
-  double limPrice = 0.0;
-  limPrice = atof(json_string_value(json_object_get(json_array_get(bidask, i-1), "price")));
-  json_decref(root);
-  return limPrice;
+
+  return p;
 }
 
 json_t* authRequest(Parameters& params, std::string url, std::string request, std::string options) {

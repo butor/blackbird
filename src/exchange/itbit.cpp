@@ -2,8 +2,8 @@
 #include "parameters.h"
 #include "curl_fun.h"
 #include "utils/restapi.h"
+#include "unique_json.hpp"
 
-#include "jansson.h"
 #include <unistd.h>
 
 namespace ItBit {
@@ -18,15 +18,14 @@ static RestApi& queryHandle(Parameters &params)
 quote_t getQuote(Parameters &params)
 {
   auto &exchange = queryHandle(params);
-  json_t *root = exchange.getRequest("/v1/markets/XBTUSD/ticker");
+  unique_json root { exchange.getRequest("/v1/markets/XBTUSD/ticker") };
 
-  const char *quote = json_string_value(json_object_get(root, "bid"));
+  const char *quote = json_string_value(json_object_get(root.get(), "bid"));
   auto bidValue = quote ? std::stod(quote) : 0.0;
 
-  quote = json_string_value(json_object_get(root, "ask"));
+  quote = json_string_value(json_object_get(root.get(), "ask"));
   auto askValue = quote ? std::stod(quote) : 0.0;
 
-  json_decref(root);
   return std::make_pair(bidValue, askValue);
 }
 

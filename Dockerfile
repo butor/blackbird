@@ -17,4 +17,4 @@ COPY . /blackbird
 
 WORKDIR /blackbird
 
-RUN make
+RUN make -B

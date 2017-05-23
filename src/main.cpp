@@ -65,14 +65,13 @@ int main(int argc, char** argv) {
   // create the csv file
   std::string currDateTime = printDateTimeFileName();
   std::string csvFileName = "blackbird_result_" + currDateTime + ".csv";
-  std::ofstream csvFile;
-  csvFile.open(csvFileName.c_str(), std::ofstream::trunc);
-  csvFile << "TRADE_ID,EXCHANGE_LONG,EXHANGE_SHORT,ENTRY_TIME,EXIT_TIME,DURATION,TOTAL_EXPOSURE,BALANCE_BEFORE,BALANCE_AFTER,RETURN\n";
-  csvFile.flush();
+  std::ofstream csvFile(csvFileName, std::ofstream::trunc);
+  csvFile << "TRADE_ID,EXCHANGE_LONG,EXHANGE_SHORT,ENTRY_TIME,EXIT_TIME,DURATION,"
+          << "TOTAL_EXPOSURE,BALANCE_BEFORE,BALANCE_AFTER,RETURN"
+          << std::endl;
   // create the log file
   std::string logFileName = "blackbird_log_" + currDateTime + ".log";
-  std::ofstream logFile;
-  logFile.open(logFileName.c_str(), std::ofstream::trunc);
+  std::ofstream logFile(logFileName, std::ofstream::trunc);
   logFile.imbue(mylocale);
   logFile.precision(2);
   logFile << std::fixed;
@@ -427,17 +426,23 @@ int main(int argc, char** argv) {
           }
           logFile.precision(2);
           logFile << "ACTUAL PERFORMANCE: " << "$" << res.usdTotBalanceAfter - res.usdTotBalanceBefore << " (" << res.actualPerf() * 100.0 << "%)\n" << std::endl;
-          csvFile << res.id << "," << res.exchNameLong << "," << res.exchNameShort << "," << printDateTimeCsv(res.entryTime) << "," << printDateTimeCsv(res.exitTime);
-          csvFile << "," << res.getTradeLengthInMinute() << "," << res.exposure * 2.0 << "," << res.usdTotBalanceBefore << "," << res.usdTotBalanceAfter << "," << res.actualPerf() << "\n";
-          csvFile.flush();
+          csvFile << res.id << ","
+                  << res.exchNameLong << ","
+                  << res.exchNameShort << ","
+                  << printDateTimeCsv(res.entryTime) << ","
+                  << printDateTimeCsv(res.exitTime) << ","
+                  << res.getTradeLengthInMinute() << ","
+                  << res.exposure * 2.0 << ","
+                  << res.usdTotBalanceBefore << ","
+                  << res.usdTotBalanceAfter << ","
+                  << res.actualPerf() << std::endl;
           if (params.sendEmail) {
             sendEmail(res, params);
             logFile << "Email sent" << std::endl;
           }
           res.reset();
           // Remove restore.txt since this trade is done.
-          std::ofstream resFile;
-          resFile.open("restore.txt", std::ofstream::trunc);
+          std::ofstream resFile("restore.txt", std::ofstream::trunc);
           resFile.close();
         }
       }

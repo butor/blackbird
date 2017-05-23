@@ -3,13 +3,14 @@
 #include "utils/restapi.h"
 #include "utils/base64.h"
 #include "hex_str.hpp"
+#include "unique_json.hpp"
 
-#include "jansson.h"
 #include "openssl/sha.h"
 #include "openssl/hmac.h"
 #include <unistd.h>
 #include <sstream>
 #include <iomanip>
+#include <array>
 #include <math.h>
 #include <sys/time.h>
 
@@ -35,28 +36,27 @@ static json_t* checkResponse(std::ostream &logFile, json_t *root)
 quote_t getQuote(Parameters &params)
 {
   auto &exchange = queryHandle(params);
-  json_t *root = exchange.getRequest("/v1/ticker/btcusd");
+  unique_json root { exchange.getRequest("/v1/ticker/btcusd") };
 
-  const char *quote = json_string_value(json_object_get(root, "bid"));
+  const char *quote = json_string_value(json_object_get(root.get(), "bid"));
   double bidValue = quote ? std::stod(quote) : 0.0;
 
-  quote = json_string_value(json_object_get(root, "ask"));
+  quote = json_string_value(json_object_get(root.get(), "ask"));
   double askValue = quote ? std::stod(quote) : 0.0;
 
-  json_decref(root);
   return std::make_pair(bidValue, askValue);
 }
 
 double getAvail(Parameters& params, std::string currency)
 {
-  json_t *root = authRequest(params, "/v1/balances", "");
+  unique_json root { authRequest(params, "/v1/balances", "") };
 
   double availability = 0.0;
-  for (size_t i = json_array_size(root); i--;)
+  for (size_t i = json_array_size(root.get()); i--;)
   {
     const char *each_type, *each_currency, *each_amount;
     json_error_t err;
-    int unpack_fail = json_unpack_ex (json_array_get(root, i),
+    int unpack_fail = json_unpack_ex (json_array_get(root.get(), i),
                                       &err, 0,
                                       "{s:s, s:s, s:s}",
                                       "type", &each_type,
@@ -73,7 +73,6 @@ double getAvail(Parameters& params, std::string currency)
       break;
     }
   }
-  json_decref(root);
   return availability;
 }
 
@@ -95,10 +94,9 @@ std::string sendOrder(Parameters& params, std::string direction, double quantity
   std::ostringstream oss;
   oss << "\"symbol\":\"btcusd\", \"amount\":\"" << quantity << "\", \"price\":\"" << price << "\", \"exchange\":\"bitfinex\", \"side\":\"" << direction << "\", \"type\":\"limit\"";
   std::string options = oss.str();
-  json_t *root = authRequest(params, "/v1/order/new", options);
-  auto orderId = std::to_string(json_integer_value(json_object_get(root, "order_id")));
+  unique_json root { authRequest(params, "/v1/order/new", options) };
+  auto orderId = std::to_string(json_integer_value(json_object_get(root.get(), "order_id")));
   *params.logFile << "<Bitfinex> Done (order ID: " << orderId << ")\n" << std::endl;
-  json_decref(root);
   return orderId;
 }
 
@@ -107,34 +105,31 @@ bool isOrderComplete(Parameters& params, std::string orderId)
   if (orderId == "0") return true;
 
   auto options =  "\"order_id\":" + orderId;
-  json_t *root = authRequest(params, "/v1/order/status", options);
-  bool isComplete = json_is_false(json_object_get(root, "is_live"));
-  json_decref(root);
-  return isComplete;
+  unique_json root { authRequest(params, "/v1/order/status", options) };
+  return json_is_false(json_object_get(root.get(), "is_live"));
 }
 
 double getActivePos(Parameters& params)
 {
-  json_t *root = authRequest(params, "/v1/positions", "");
+  unique_json root { authRequest(params, "/v1/positions", "") };
   double position;
-  if (json_array_size(root) == 0)
+  if (json_array_size(root.get()) == 0)
   {
     *params.logFile << "<Bitfinex> WARNING: BTC position not available, return 0.0" << std::endl;
     position = 0.0;
   }
   else
   {
-    position = atof(json_string_value(json_object_get(json_array_get(root, 0), "amount")));
+    position = atof(json_string_value(json_object_get(json_array_get(root.get(), 0), "amount")));
   }
-  json_decref(root);
   return position;
 }
 
 double getLimitPrice(Parameters& params, double volume, bool isBid)
 {
   auto &exchange  = queryHandle(params);
-  json_t *root    = exchange.getRequest("/v1/book/btcusd");
-  json_t *bidask  = json_object_get(root, isBid ? "bids" : "asks");
+  unique_json root { exchange.getRequest("/v1/book/btcusd") };
+  json_t *bidask  = json_object_get(root.get(), isBid ? "bids" : "asks");
 
   *params.logFile << "<Bitfinex> Looking for a limit price to fill "
                   << std::setprecision(6) << fabs(volume) << " BTC...\n";
@@ -154,7 +149,6 @@ double getLimitPrice(Parameters& params, double volume, bool isBid)
     if (tmpVol >= fabs(volume) * params.orderBookFactor) break;
   }
 
-  json_decref(root);
   return p;
 }
 

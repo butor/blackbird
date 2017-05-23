@@ -2,7 +2,8 @@
 
 #include "jansson.h"
 #include <assert.h>
-#include <unistd.h> // sleep
+#include <chrono>
+#include <thread> // sleep
 
 
 namespace
@@ -38,7 +39,7 @@ json_t* doRequest(CURL *C,
 
 retry_state:
   log << "  Retry in 2 sec..." << std::endl;
-  sleep(2.0);
+  std::this_thread::sleep_for(std::chrono::seconds(2));
   recvBuffer.clear();
   curl_easy_setopt(C, CURLOPT_DNS_CACHE_TIMEOUT, 0);
 

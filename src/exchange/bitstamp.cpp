@@ -3,8 +3,8 @@
 #include "curl_fun.h"
 #include "utils/restapi.h"
 #include "utils/base64.h"
+#include "unique_json.hpp"
 
-#include "jansson.h"
 #include "openssl/sha.h"
 #include "openssl/hmac.h"
 #include <unistd.h>
@@ -26,36 +26,35 @@ static RestApi& queryHandle(Parameters &params)
 quote_t getQuote(Parameters& params)
 {
   auto &exchange = queryHandle(params);
-  json_t *root = exchange.getRequest("/api/ticker");
+  unique_json root { exchange.getRequest("/api/ticker") };
 
-  const char *quote = json_string_value(json_object_get(root, "bid"));
+  const char *quote = json_string_value(json_object_get(root.get(), "bid"));
   auto bidValue = quote ? atof(quote) : 0.0;
 
-  quote = json_string_value(json_object_get(root, "ask"));
+  quote = json_string_value(json_object_get(root.get(), "ask"));
   auto askValue = quote ? atof(quote) : 0.0;
 
-  json_decref(root);
   return std::make_pair(bidValue, askValue);
 }
 
 double getAvail(Parameters& params, std::string currency)
 {
-  json_t* root = authRequest(params, "https://www.bitstamp.net/api/balance/", "");
-  while (json_object_get(root, "message") != NULL)
+  unique_json root { authRequest(params, "https://www.bitstamp.net/api/balance/", "") };
+  while (json_object_get(root.get(), "message") != NULL)
   {
     sleep(1.0);
-    *params.logFile << "<Bitstamp> Error with JSON: " << json_dumps(root, 0) << ". Retrying..." << std::endl;
-    root = authRequest(params, "https://www.bitstamp.net/api/balance/", "");
+    *params.logFile << "<Bitstamp> Error with JSON: " << json_dumps(root.get(), 0) << ". Retrying..." << std::endl;
+    root.reset(authRequest(params, "https://www.bitstamp.net/api/balance/", ""));
   }
   double availability = 0.0;
   const char* returnedText = NULL;
   if (currency == "btc")
   {
-    returnedText = json_string_value(json_object_get(root, "btc_balance"));
+    returnedText = json_string_value(json_object_get(root.get(), "btc_balance"));
   }
   else if (currency == "usd")
   {
-    returnedText = json_string_value(json_object_get(root, "usd_balance"));
+    returnedText = json_string_value(json_object_get(root.get(), "usd_balance"));
   }
   if (returnedText != NULL)
   {
@@ -66,7 +65,7 @@ double getAvail(Parameters& params, std::string currency)
     *params.logFile << "<Bitstamp> Error with the credentials." << std::endl;
     availability = 0.0;
   }
-  json_decref(root);
+
   return availability;
 }
 
@@ -82,14 +81,14 @@ std::string sendLongOrder(Parameters& params, std::string direction, double quan
   oss.str("");
   oss << "amount=" << quantity << "&price=" << std::fixed << std::setprecision(2) << price;
   std::string options = oss.str();
-  json_t* root = authRequest(params, url, options);
-  auto orderId = std::to_string(json_integer_value(json_object_get(root, "id")));
+  unique_json root { authRequest(params, url, options) };
+  auto orderId = std::to_string(json_integer_value(json_object_get(root.get(), "id")));
   if (orderId == "0")
   {
-    *params.logFile << "<Bitstamp> Order ID = 0. Message: " << json_dumps(root, 0) << '\n';
+    *params.logFile << "<Bitstamp> Order ID = 0. Message: " << json_dumps(root.get(), 0) << '\n';
   }
   *params.logFile << "<Bitstamp> Done (order ID: " << orderId << ")\n" << std::endl;
-  json_decref(root);
+
   return orderId;
 }
 
@@ -98,9 +97,8 @@ bool isOrderComplete(Parameters& params, std::string orderId)
   if (orderId == "0") return true;
 
   auto options = "id=" + orderId;
-  json_t* root = authRequest(params, "https://www.bitstamp.net/api/order_status/", options);
-  std::string status = json_string_value(json_object_get(root, "status"));
-  json_decref(root);
+  unique_json root { authRequest(params, "https://www.bitstamp.net/api/order_status/", options) };
+  std::string status = json_string_value(json_object_get(root.get(), "status"));
   return status == "Finished";
 }
 
@@ -109,14 +107,14 @@ double getActivePos(Parameters& params) { return getAvail(params, "btc"); }
 double getLimitPrice(Parameters& params, double volume, bool isBid)
 {
   auto &exchange = queryHandle(params);
-  json_t *root = exchange.getRequest("/api/order_book");
-  auto orderbook = json_object_get(root, isBid ? "bids" : "asks");
+  unique_json root { exchange.getRequest("/api/order_book") };
+  auto orderbook = json_object_get(root.get(), isBid ? "bids" : "asks");
 
   // loop on volume
   *params.logFile << "<Bitstamp> Looking for a limit price to fill "
                   << std::setprecision(6) << fabs(volume) << " BTC...\n";
   double tmpVol = 0.0;
-  double p;
+  double p = 0.0;
   double v;
   int i = 0;
   while (tmpVol < fabs(volume) * params.orderBookFactor)
@@ -129,10 +127,7 @@ double getLimitPrice(Parameters& params, double volume, bool isBid)
     tmpVol += v;
     i++;
   }
-  double limPrice = 0.0;
-  limPrice = atof(json_string_value(json_array_get(json_array_get(orderbook, i-1), 0)));
-  json_decref(root);
-  return limPrice;
+  return p;
 }
 
 json_t* authRequest(Parameters& params, std::string url, std::string options)
