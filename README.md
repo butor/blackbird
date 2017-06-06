@@ -195,6 +195,18 @@ If all goes well this produces a Blackbird executable in the project directory.
   CXX=g++-7 make
   ```
 
+4. Run blackbird as usual. If blackbird crashes with the following command:
+
+  ```
+  what(): locale::facet::_S_create_c_locale name not valid
+  ```
+
+  run blackbird using the 'C' locale:
+
+  ```
+  LC_ALL="C" ./blackbird
+  ```
+
 ### Contact
 
 * If you found a bug, please open a new <a href="https://github.com/butor/blackbird/issues" target="_blank">issue</a> with the label _bug_
