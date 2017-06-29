@@ -7,7 +7,7 @@
 // Contains all the information for a given exchange, 
 // like fees and wether we can short on that exchange.
 // FIXME: short selling should depend on the currency.
-class Bitcoin {
+class Exchange {
   
   private:
     unsigned id;
@@ -18,7 +18,7 @@ class Bitcoin {
     double bid, ask;
 
   public:
-    Bitcoin(unsigned id, std::string n, double f, bool h, bool m);
+    Exchange(unsigned id, std::string n, double f, bool h, bool m);
     void updateData(quote_t quote);
     unsigned getId() const;
     double getAsk() const;

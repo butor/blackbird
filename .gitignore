@@ -7,3 +7,11 @@ blackbird.db
 sqlite3
 core
 build
+.idea/
+CMakeCache.txt
+CMakeFiles/
+blackbird_CXX_cotire.cmake
+cmake-build-debug/
+cmake_install.cmake
+cotire/
+blackbird.cbp
