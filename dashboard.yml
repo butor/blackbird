@@ -1,0 +1,20 @@
+version: '2'
+
+services:
+  fluentd:
+    build: dashboard/fluentd
+    volumes:
+      - ./dashboard/fluentd:/fluentd/etc
+      - ./output:/log
+  influxdb:
+    image: influxdb
+    volumes:
+      - ./dashboard/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf:ro
+      - ./dashboard/influxdb/db:/var/lib/influxdb
+  chronograf:
+    image: chronograf
+    command: chronograf --influxdb-url=http://influxdb:8086
+    volumes:
+      - ./dashboard/chronograf:/var/lib/chronograf
+    ports:
+      - 8888:${DASHBOARD_PORT}
