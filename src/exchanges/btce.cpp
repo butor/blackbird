@@ -20,7 +20,7 @@ static json_t* adjustResponse(json_t *);
 
 static RestApi& queryHandle(Parameters &params)
 {
-  static RestApi query ("https://btc-e.com",
+  static RestApi query ("https://wex.nz",
                         params.cacert.c_str(), *params.logFile);
   return query;
 }
