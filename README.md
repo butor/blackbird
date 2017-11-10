@@ -179,6 +179,22 @@ If all goes well this produces a Blackbird executable in the project directory.
   docker-compose up
   ```
 
+### Dashboard
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/827634/32658617-fde6f09c-c601-11e7-9c27-f5608c5c798e.png"  width="80%" alt="Dashboard">
+</p>
+
+1. Spin up the dashboard with docker-compose (OSX/Linux):
+
+  ```
+  docker-compose -f dashboard.yml up -d
+  ```
+
+2. Open the dashboard in your browser:
+
+<a href="http://localhost:8888/sources/0/dashboards/1" target="_blank">http://localhost:8888/sources/0/dashboards/1</a>
+
 ### Contact
 
 * If you found a bug, please open a new <a href="https://github.com/butor/blackbird/issues" target="_blank">issue</a> with the label _bug_
