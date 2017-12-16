@@ -17,6 +17,17 @@
 
 namespace Bitstamp {
 
+namespace {
+
+std::string tickerMapping(const std::string& input){
+  std::string data = input;
+  std::transform(data.begin(), data.end(), data.begin(), ::tolower);
+  // TODO
+  return data;
+}
+
+}
+
 static json_t* authRequest(Parameters &, std::string, std::string);
 
 static RestApi& queryHandle(Parameters &params)
@@ -44,7 +55,13 @@ static json_t* checkResponse(std::ostream &logFile, json_t *root)
 quote_t getQuote(Parameters& params)
 {
   auto &exchange = queryHandle(params);
-  unique_json root { exchange.getRequest("/api/ticker") };
+  // https://www.bitstamp.net/api/v2/ticker/xrpusd
+  std::string url("/api/v2/ticker/");
+  std::string ccyLowerCase = params.leg2;
+  std::transform(params.leg2.begin(), params.leg2.end(), ccyLowerCase
+          .begin(), ::tolower);
+  url += tickerMapping(params.leg1) + ccyLowerCase;
+  unique_json root { exchange.getRequest(url) };
 
   const char *quote = json_string_value(json_object_get(root.get(), "bid"));
   auto bidValue = quote ? atof(quote) : 0.0;
@@ -68,7 +85,7 @@ double getAvail(Parameters& params, std::string currency)
   }
   double availability = 0.0;
   const char* returnedText = NULL;
-  if (currency == "btc")
+  if (currency == params.leg1)
   {
     returnedText = json_string_value(json_object_get(root.get(), "btc_balance"));
   }
@@ -122,7 +139,7 @@ bool isOrderComplete(Parameters& params, std::string orderId)
   return status && status == std::string("Finished");
 }
 
-double getActivePos(Parameters& params) { return getAvail(params, "btc"); }
+double getActivePos(Parameters& params) { return getAvail(params, params.leg1); }
 
 double getLimitPrice(Parameters& params, double volume, bool isBid)
 {

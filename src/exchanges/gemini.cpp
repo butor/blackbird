@@ -27,7 +27,8 @@ quote_t getQuote(Parameters &params)
 {
   auto &exchange = queryHandle(params);
   std::string url;
-  url = "/v1/book/BTCUSD";
+  url = "/v1/book/";
+  url += params.leg1 + params.leg2;
   
   unique_json root { exchange.getRequest(url) };
   const char *quote = json_string_value(json_object_get(json_array_get(json_object_get(root.get(), "bids"), 0), "price"));

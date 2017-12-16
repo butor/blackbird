@@ -39,7 +39,8 @@ quote_t getQuote(Parameters &params)
   auto &exchange = queryHandle(params);
 
   std::string url;
-  url = "/v1/ticker/btcusd";
+  url = "/v1/ticker/";
+  url += params.leg1 + params.leg2;
   
   unique_json root { exchange.getRequest(url) };
 

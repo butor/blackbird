@@ -1,9 +1,11 @@
+blackbird.conf
 *.log
 *.csv
 *.o
 *.a
 blackbird
 blackbird.db
+blackbird.db*
 sqlite3
 core
 build

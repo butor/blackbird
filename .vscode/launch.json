@@ -9,9 +9,9 @@
             ,"type": "cppdbg"
             ,"request": "launch"
             ,"program": "${workspaceRoot}/blackbird"
-            ,"miDebuggerServerAddress": "localhost:9091"
+            //,"miDebuggerServerAddress": "localhost:9091"
             ,"args": []
-            ,"stopAtEntry": false
+            ,"stopAtEntry": true
             ,"cwd": "${workspaceRoot}"
             ,"environment": []
             ,"externalConsole": true
@@ -24,7 +24,7 @@
             ,"windows": {
               "MIMode": "gdb"
             }
-            ,"preLaunchTask": "launch debug container"
+            ,"preLaunchTask": "Build Blackbird"
         }
     ]
 }

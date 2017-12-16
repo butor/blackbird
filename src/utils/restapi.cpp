@@ -52,7 +52,8 @@ curl_state:
 /* documentation label */
 // json_state:
   json_error_t error;
-  json_t *root = json_loads(recvBuffer.c_str(), 0, &error);
+  const char* response = recvBuffer.c_str();
+  json_t *root = json_loads(response, 0, &error);
   if (!root) {
     long resp_code;
     curl_easy_getinfo(C, CURLINFO_RESPONSE_CODE, &resp_code);

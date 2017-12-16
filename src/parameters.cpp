@@ -71,6 +71,8 @@ Parameters::Parameters(std::string fileName) {
     exit(EXIT_FAILURE);
   }
 
+  venueSpreadTh = getDouble(getParameter("VenueSpreadTh", configFile));
+
   spreadEntry = getDouble(getParameter("SpreadEntry", configFile));
   spreadTarget = getDouble(getParameter("SpreadTarget", configFile));
   maxLength = getUnsigned(getParameter("MaxLength", configFile));
@@ -133,6 +135,12 @@ Parameters::Parameters(std::string fileName) {
   quadrigaFees = getDouble(getParameter("QuadrigaFees", configFile));
   quadrigaClientId = getParameter("QuadrigaClientId", configFile);
   quadrigaEnable = getBool(getParameter("QuadrigaEnable", configFile));
+
+  cexioApi = getParameter("CexioApiKey", configFile);
+  cexioSecret = getParameter("CexioSecretKey", configFile);
+  cexioFees = getDouble(getParameter("CexioFees", configFile));
+  cexioClientId = getParameter("CexioClientId", configFile);
+  cexioEnable = getBool(getParameter("CexioEnable", configFile));
 
   sendEmail = getBool(getParameter("SendEmail", configFile));
   senderAddress = getParameter("SenderAddress", configFile);

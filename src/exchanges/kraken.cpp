@@ -19,6 +19,19 @@ static bool krakenGotTicker = false;
 static unique_json krakenLimPrice = nullptr;
 static bool krakenGotLimPrice = false;
 
+std::string tickerMapping(const std::string& input){
+  std::string canonicalAsset;
+  std::transform(input.begin(), input.end(), canonicalAsset
+          .begin(), ::toupper);
+  // TODO make sure the mapping is complete
+  if (canonicalAsset == "BTC") {
+    return "XBT";
+  }
+  else {
+    return canonicalAsset;
+  }
+}
+
 static RestApi& queryHandle(Parameters &params)
 {
   static RestApi query ("https://api.kraken.com",
@@ -32,7 +45,8 @@ quote_t getQuote(Parameters &params)
     krakenGotTicker = false;
   } else {
     auto &exchange = queryHandle(params);
-    krakenTicker.reset(exchange.getRequest("/0/public/Ticker?pair=XXBTZUSD"));
+    std::string ccyPair = tickerMapping(params.leg1) + tickerMapping(params.leg2);
+    krakenTicker.reset(exchange.getRequest("/0/public/Ticker?pair=" + ccyPair));
     krakenGotTicker = true;
   }
   json_t *root = krakenTicker.get();

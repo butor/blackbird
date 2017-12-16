@@ -15,7 +15,9 @@ static RestApi& queryHandle(Parameters &params)
 quote_t getQuote(Parameters &params)
 {
   auto &exchange = queryHandle(params);
-  unique_json root { exchange.getRequest("/products/BTC-USD/ticker") };
+  std::string url("/products/");
+  url += params.leg1 + "-" + params.leg2 + "/ticker";
+  unique_json root { exchange.getRequest(url) };
 
   const char *bid, *ask;
   int unpack_fail = json_unpack(root.get(), "{s:s, s:s}", "bid", &bid, "ask", &ask);

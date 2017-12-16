@@ -4,9 +4,23 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "launch debug container"
-            ,"type": "shell"
-            ,"command": "docker-compose -f docker-compose.yml -f docker-compose.debug.yml up -d"
+            "label": "Build Blackbird",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "./build",
+                "-- install"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Run Blackbird",
+            "type": "shell",
+            "command": "./blackbird"
         }
     ]
 }
