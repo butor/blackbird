@@ -588,6 +588,9 @@ int main(int argc, char** argv) {
               break;
             }
           }
+          if (inMarket) {
+            break;
+          }
         }
         if (inMarket) {
           break;
