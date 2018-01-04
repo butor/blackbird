@@ -488,15 +488,15 @@ int main(int argc, char** argv) {
             if (checkEntry(&btcVec[i], &btcVec[j], res, params)) {
               // An entry opportunity has been found!
               res.exposure = std::min(balance[res.idExchLong].leg2, balance[res.idExchShort].leg2);
-              if (params.demoMode) {
-                logFile << "INFO: Opportunity found but no trade will be generated (Demo mode)" << std::endl;
-                break;
-              }
-              if (res.exposure == 0.0) {
+              // if (params.demoMode) {
+              //   logFile << "INFO: Opportunity found but no trade will be generated (Demo mode)" << std::endl;
+              //   break;
+              // }
+              if (!params.demoMode && res.exposure == 0.0) {
                 logFile << "WARNING: Opportunity found but no cash available. Trade canceled" << std::endl;
                 break;
               }
-              if (params.useFullExposure == false && res.exposure <= params.testedExposure) {
+              if (!params.demoMode && params.useFullExposure == false && res.exposure <= params.testedExposure) {
                 logFile << "WARNING: Opportunity found but no enough cash. Need more than TEST cash (min. $"
                         << std::setprecision(2) << params.testedExposure << "). Trade canceled" << std::endl;
                 break;
@@ -539,48 +539,55 @@ int main(int argc, char** argv) {
               }
               // We are in market now, meaning we have positions on leg1 (the hedged on)
               // We store the details of that first trade into the Result structure.
-              inMarket = true;
-              resultId++;
-              res.id = resultId;
-              res.entryTime = currTime;
-              res.priceLongIn = limPriceLong;
-              res.priceShortIn = limPriceShort;
-              res.printEntryInfo(*params.logFile);
-              res.maxSpread[res.idExchLong][res.idExchShort] = -1.0;
-              res.minSpread[res.idExchLong][res.idExchShort] = 1.0;
-              res.trailing[res.idExchLong][res.idExchShort] = 1.0;
+              logFile << "INFO: Opportunity found\n";
+              logFile.precision(2);
+              logFile << "         Target long price:  " << res.priceLongIn << ", Real long price:  " << limPriceLong << std::endl;
+              logFile << "         Target short price: " << res.priceShortIn << ", Real short price: " << limPriceShort << std::endl;
+              if (!params.demoMode) {
+                  inMarket = true;
+                  resultId++;
+                  res.id = resultId;
+                  res.entryTime = currTime;
+                  res.priceLongIn = limPriceLong;
+                  res.priceShortIn = limPriceShort;
+                  res.printEntryInfo(*params.logFile);
+                  res.maxSpread[res.idExchLong][res.idExchShort] = -1.0;
+                  res.minSpread[res.idExchLong][res.idExchShort] = 1.0;
+                  res.trailing[res.idExchLong][res.idExchShort] = 1.0;
 
-              // Send the orders to the two exchanges
-              auto longOrderId = sendLongOrder[res.idExchLong](params, "buy", volumeLong, limPriceLong);
-              auto shortOrderId = sendShortOrder[res.idExchShort](params, "sell", volumeShort, limPriceShort);
-              logFile << "Waiting for the two orders to be filled..." << std::endl;
-              sleep_for(millisecs(5000));
-              bool isLongOrderComplete = isOrderComplete[res.idExchLong](params, longOrderId);
-              bool isShortOrderComplete = isOrderComplete[res.idExchShort](params, shortOrderId);
-              // Loops until both orders are completed
-              while (!isLongOrderComplete || !isShortOrderComplete) {
-                sleep_for(millisecs(3000));
-                if (!isLongOrderComplete) {
-                  logFile << "Long order on " << params.exchName[res.idExchLong] << " still open..." << std::endl;
-                  isLongOrderComplete = isOrderComplete[res.idExchLong](params, longOrderId);
-                }
-                if (!isShortOrderComplete) {
-                  logFile << "Short order on " << params.exchName[res.idExchShort] << " still open..." << std::endl;
-                  isShortOrderComplete = isOrderComplete[res.idExchShort](params, shortOrderId);
-                }
+                  // Send the orders to the two exchanges
+                  auto longOrderId = sendLongOrder[res.idExchLong](params, "buy", volumeLong, limPriceLong);
+                  auto shortOrderId = sendShortOrder[res.idExchShort](params, "sell", volumeShort, limPriceShort);
+                  logFile << "Waiting for the two orders to be filled..." << std::endl;
+                  sleep_for(millisecs(5000));
+                  bool isLongOrderComplete = isOrderComplete[res.idExchLong](params, longOrderId);
+                  bool isShortOrderComplete = isOrderComplete[res.idExchShort](params, shortOrderId);
+                  // Loops until both orders are completed
+                  while (!isLongOrderComplete || !isShortOrderComplete) {
+                    sleep_for(millisecs(3000));
+                    if (!isLongOrderComplete) {
+                      logFile << "Long order on " << params.exchName[res.idExchLong] << " still open..." << std::endl;
+                      isLongOrderComplete = isOrderComplete[res.idExchLong](params, longOrderId);
+                    }
+                    if (!isShortOrderComplete) {
+                      logFile << "Short order on " << params.exchName[res.idExchShort] << " still open..." << std::endl;
+                      isShortOrderComplete = isOrderComplete[res.idExchShort](params, shortOrderId);
+                    }
+                  }
+                  // Resets the order ids
+                  longOrderId  = "0";
+                  shortOrderId = "0";
+                  // Stores the partial result to file in case
+                  // the program exits before closing the position.
+                  res.savePartialResult("restore.txt");
+                  // Both orders are now fully executed
+                  logFile << "Done" << std::endl;
               }
-              // Both orders are now fully executed
-              logFile << "Done" << std::endl;
-
-              // Stores the partial result to file in case
-              // the program exits before closing the position.
-              res.savePartialResult("restore.txt");
-
-              // Resets the order ids
-              longOrderId  = "0";
-              shortOrderId = "0";
               break;
             }
+          }
+          if (inMarket) {
+            break;
           }
         }
         if (inMarket) {
@@ -626,27 +633,29 @@ int main(int argc, char** argv) {
           logFile << params.leg1 << " exposure on " << params.exchName[res.idExchLong] << ": " << volumeLong << '\n'
                   << params.leg1 << " exposure on " << params.exchName[res.idExchShort] << ": " << volumeShort << '\n'
                   << std::endl;
-          auto longOrderId = sendLongOrder[res.idExchLong](params, "sell", fabs(btcUsed[res.idExchLong]), limPriceLong);
-          auto shortOrderId = sendShortOrder[res.idExchShort](params, "buy", fabs(btcUsed[res.idExchShort]), limPriceShort);
-          logFile << "Waiting for the two orders to be filled..." << std::endl;
-          sleep_for(millisecs(5000));
-          bool isLongOrderComplete = isOrderComplete[res.idExchLong](params, longOrderId);
-          bool isShortOrderComplete = isOrderComplete[res.idExchShort](params, shortOrderId);
-          // Loops until both orders are completed
-          while (!isLongOrderComplete || !isShortOrderComplete) {
-            sleep_for(millisecs(3000));
-            if (!isLongOrderComplete) {
-              logFile << "Long order on " << params.exchName[res.idExchLong] << " still open..." << std::endl;
-              isLongOrderComplete = isOrderComplete[res.idExchLong](params, longOrderId);
-            }
-            if (!isShortOrderComplete) {
-              logFile << "Short order on " << params.exchName[res.idExchShort] << " still open..." << std::endl;
-              isShortOrderComplete = isOrderComplete[res.idExchShort](params, shortOrderId);
-            }
+          if (!params.demoMode) {
+              auto longOrderId = sendLongOrder[res.idExchLong](params, "sell", fabs(btcUsed[res.idExchLong]), limPriceLong);
+              auto shortOrderId = sendShortOrder[res.idExchShort](params, "buy", fabs(btcUsed[res.idExchShort]), limPriceShort);
+              logFile << "Waiting for the two orders to be filled..." << std::endl;
+              sleep_for(millisecs(5000));
+              bool isLongOrderComplete = isOrderComplete[res.idExchLong](params, longOrderId);
+              bool isShortOrderComplete = isOrderComplete[res.idExchShort](params, shortOrderId);
+              // Loops until both orders are completed
+              while (!isLongOrderComplete || !isShortOrderComplete) {
+                sleep_for(millisecs(3000));
+                if (!isLongOrderComplete) {
+                  logFile << "Long order on " << params.exchName[res.idExchLong] << " still open..." << std::endl;
+                  isLongOrderComplete = isOrderComplete[res.idExchLong](params, longOrderId);
+                }
+                if (!isShortOrderComplete) {
+                  logFile << "Short order on " << params.exchName[res.idExchShort] << " still open..." << std::endl;
+                  isShortOrderComplete = isOrderComplete[res.idExchShort](params, shortOrderId);
+                }
+              }
+              longOrderId  = "0";
+              shortOrderId = "0";
           }
           logFile << "Done\n" << std::endl;
-          longOrderId  = "0";
-          shortOrderId = "0";
           inMarket = false;
           for (int i = 0; i < numExch; ++i) {
             balance[i].leg2After = getAvail[i](params, "usd"); // FIXME: currency hard-coded

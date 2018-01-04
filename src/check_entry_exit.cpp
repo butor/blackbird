@@ -32,7 +32,7 @@ std::string percToStr(double perc) {
 
 bool checkEntry(Bitcoin* btcLong, Bitcoin* btcShort, Result& res, Parameters& params) {
   
-  if (!btcShort->getHasShort()) return false;
+  if (!btcShort->getHasShort() && !params.demoMode) return false;
 
   // Gets the prices and computes the spread
   double priceLong = btcLong->getAsk();
@@ -51,7 +51,7 @@ bool checkEntry(Bitcoin* btcLong, Bitcoin* btcShort, Result& res, Parameters& pa
   res.maxSpread[longId][shortId] = std::max(res.spreadIn, res.maxSpread[longId][shortId]);
   res.minSpread[longId][shortId] = std::min(res.spreadIn, res.minSpread[longId][shortId]);
 
-  if (params.verbose) {
+  if (params.verbose && res.spreadIn > 0) {
     params.logFile->precision(2);
     *params.logFile << "   " << btcLong->getExchName() << "/" << btcShort->getExchName() << ":\t" << percToStr(res.spreadIn);
     *params.logFile << " [target " << percToStr(params.spreadEntry) << ", min " << percToStr(res.minSpread[longId][shortId]) << ", max " << percToStr(res.maxSpread[longId][shortId]) << "]";
