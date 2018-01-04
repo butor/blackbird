@@ -543,19 +543,19 @@ int main(int argc, char** argv) {
               logFile.precision(2);
               logFile << "         Target long price:  " << res.priceLongIn << ", Real long price:  " << limPriceLong << std::endl;
               logFile << "         Target short price: " << res.priceShortIn << ", Real short price: " << limPriceShort << std::endl;
-              inMarket = true;
-              resultId++;
-              res.id = resultId;
-              res.entryTime = currTime;
-              res.priceLongIn = limPriceLong;
-              res.priceShortIn = limPriceShort;
-              res.printEntryInfo(*params.logFile);
-              res.maxSpread[res.idExchLong][res.idExchShort] = -1.0;
-              res.minSpread[res.idExchLong][res.idExchShort] = 1.0;
-              res.trailing[res.idExchLong][res.idExchShort] = 1.0;
-
-              // Send the orders to the two exchanges
               if (!params.demoMode) {
+                  inMarket = true;
+                  resultId++;
+                  res.id = resultId;
+                  res.entryTime = currTime;
+                  res.priceLongIn = limPriceLong;
+                  res.priceShortIn = limPriceShort;
+                  res.printEntryInfo(*params.logFile);
+                  res.maxSpread[res.idExchLong][res.idExchShort] = -1.0;
+                  res.minSpread[res.idExchLong][res.idExchShort] = 1.0;
+                  res.trailing[res.idExchLong][res.idExchShort] = 1.0;
+
+                  // Send the orders to the two exchanges
                   auto longOrderId = sendLongOrder[res.idExchLong](params, "buy", volumeLong, limPriceLong);
                   auto shortOrderId = sendShortOrder[res.idExchShort](params, "sell", volumeShort, limPriceShort);
                   logFile << "Waiting for the two orders to be filled..." << std::endl;
@@ -577,14 +577,12 @@ int main(int argc, char** argv) {
                   // Resets the order ids
                   longOrderId  = "0";
                   shortOrderId = "0";
+                  // Stores the partial result to file in case
+                  // the program exits before closing the position.
+                  res.savePartialResult("restore.txt");
+                  // Both orders are now fully executed
+                  logFile << "Done" << std::endl;
               }
-              // Both orders are now fully executed
-              logFile << "Done" << std::endl;
-
-              // Stores the partial result to file in case
-              // the program exits before closing the position.
-              res.savePartialResult("restore.txt");
-
               break;
             }
           }
