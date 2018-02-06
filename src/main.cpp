@@ -273,7 +273,7 @@ int main(int argc, char** argv) {
   }
   if (params.cexioEnable &&
          (params.cexioApi.empty() == false || params.demoMode == true)) {
-    params.addExchange("Cexio", params.cexioFees, false, true);
+    params.addExchange("Cexio", params.cexioFees, true, true);
     getQuote[index] = Cexio::getQuote;
     getAvail[index] = Cexio::getAvail;
     sendLongOrder[index] = Cexio::sendLongOrder;
