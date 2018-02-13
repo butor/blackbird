@@ -1,13 +1,12 @@
-#ifndef KRAKEN_H
-#define KRAKEN_H
+#ifndef BITTREX_H
+#define BITTREX_H
 
 #include "quote_t.h"
 #include <string>
 
-struct json_t;
 struct Parameters;
 
-namespace Kraken {
+namespace Bittrex {
 
 quote_t getQuote(Parameters& params);
 
@@ -19,13 +18,11 @@ std::string sendShortOrder(Parameters& params, std::string direction, double qua
 
 bool isOrderComplete(Parameters& params, std::string orderId);
 
-double getActivePos(Parameters& params, std::string orderId = "");
+double getActivePos(Parameters& params, std::string orderId="");
 
 double getLimitPrice(Parameters& params, double volume, bool isBid);
 
-json_t* authRequest(Parameters& params, std::string request, std::string options = "");
-
-void testKraken();
+void testBittrex();
 }
 
 #endif
