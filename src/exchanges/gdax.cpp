@@ -9,7 +9,7 @@
 #include <vector>
 #include <array>
 #include <ctime>
-#include <cmath>
+#include "hex_str.hpp"
 
 namespace GDAX
 {
@@ -68,10 +68,17 @@ double getAvail(Parameters &params, std::string currency)
   return available;
 }
 
-double getActivePos(Parameters &params)
+double getActivePos(Parameters &params, std::string orderId)
 {
-  // TODO: this is not really a good way to get active positions
-  return getAvail(params, "BTC");
+  double activeSize = 0.0;
+  if (!orderId.empty())
+  {
+    std::string uri = "/orders/";
+    uri += orderId.c_str();
+    unique_json root{authRequest(params, "GET", uri, "")};
+    activeSize = atof(json_string_value(json_object_get(root.get(), "size")));
+  }
+  return activeSize;
 }
 
 double getLimitPrice(Parameters &params, double volume, bool isBid)
@@ -109,14 +116,15 @@ std::string sendLongOrder(Parameters &params, std::string direction, double quan
   }
   *params.logFile << "<GDAX> Trying to send a \"" << direction << "\" limit order: "
                   << std::setprecision(8) << quantity << " @ $"
-                  << std::setprecision(8) << price << "...\n";
+                  << std::setprecision(8) << price << "...\n"
+                  << std::endl;
   std::string pair = "BTC-USD";
   std::string type = direction;
   char buff[300];
   snprintf(buff, 300, "{\"size\":\"%.8f\",\"price\":\"%.8f\",\"side\":\"%s\",\"product_id\": \"%s\"}", quantity, price, type.c_str(), pair.c_str());
   unique_json root{authRequest(params, "POST", "/orders", buff)};
+  // error check this
   auto txid = json_string_value(json_object_get(root.get(), "id"));
-
   *params.logFile << "<GDAX> Done (transaction ID: " << txid << ")\n"
                   << std::endl;
   return txid;
@@ -124,7 +132,6 @@ std::string sendLongOrder(Parameters &params, std::string direction, double quan
 
 bool isOrderComplete(Parameters &params, std::string orderId)
 {
-
   unique_json root{authRequest(params, "GET", "/orders", "")};
   size_t arraySize = json_array_size(root.get());
   bool complete = true;
@@ -145,21 +152,13 @@ bool isOrderComplete(Parameters &params, std::string orderId)
 json_t *authRequest(Parameters &params, std::string method, std::string request, const std::string &options)
 {
   // create timestamp
-
-  //static uint64_t nonce = time(nullptr);
   std::string nonce = gettime();
   // create data string
-
   std::string post_data = nonce + method + request + options;
-
-  //if (!options.empty())
-  //  post_data += options;
-
   // create decoded key
-
   std::string decoded_key = base64_decode(params.gdaxSecret);
 
-  // Message Signature using HMAC-SHA256 of (NONCE+ METHOD??? + PATH + body)
+  // Message Signature using HMAC-SHA256 of (NONCE+ METHOD + PATH + body)
 
   uint8_t *hmac_digest = HMAC(EVP_sha256(),
                               decoded_key.c_str(), decoded_key.length(),
@@ -167,9 +166,7 @@ json_t *authRequest(Parameters &params, std::string method, std::string request,
 
   // encode the HMAC to base64
   std::string api_sign_header = base64_encode(hmac_digest, SHA256_DIGEST_LENGTH);
-
   // cURL header
-
   std::array<std::string, 5> headers{
       "CB-ACCESS-KEY:" + params.gdaxApi,
       "CB-ACCESS-SIGN:" + api_sign_header,
@@ -180,7 +177,6 @@ json_t *authRequest(Parameters &params, std::string method, std::string request,
 
   // cURL request
   auto &exchange = queryHandle(params);
-
   //TODO: this sucks please do something better
   if (method.compare("GET") == 0)
   {
@@ -196,6 +192,7 @@ json_t *authRequest(Parameters &params, std::string method, std::string request,
     exit(0);
   }
 }
+
 std::string gettime()
 {
 
@@ -207,8 +204,6 @@ std::string gettime()
   char time_buffer2[200];
   snprintf(time_buffer2, 200, "%s.%d000Z", buffer, milli);
   snprintf(time_buffer2, 200, "%sZ", buffer);
-
-  //return time_buffer2;
 
   time_t result = time(NULL);
   long long result2 = result;
@@ -244,6 +239,6 @@ void testGDAX()
   //orderId = sendLongOrder(params, "sell", 0.02, 10000);
   //std::cout << orderId << std::endl;
   //std::cout << "Sell order is complete: " << isOrderComplete(params, orderId) << std::endl;
-  //std::cout << "Active Position: " << getActivePos(params);
+  //std::cout << "Active Position: " << getActivePos(params,orderId);
 }
 }
