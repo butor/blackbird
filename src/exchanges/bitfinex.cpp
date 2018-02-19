@@ -55,7 +55,7 @@ quote_t getQuote(Parameters &params)
 double getAvail(Parameters& params, std::string currency)
 {
   unique_json root { authRequest(params, "/v1/balances", "") };
-
+  symbolTransform(params, currency);
   double availability = 0.0;
   for (size_t i = json_array_size(root.get()); i--;)
   {
@@ -114,18 +114,19 @@ bool isOrderComplete(Parameters& params, std::string orderId)
   return json_is_false(json_object_get(root.get(), "is_live"));
 }
 
-double getActivePos(Parameters& params)
+double getActivePos(Parameters& params, std::string orderId)
 {
-  unique_json root { authRequest(params, "/v1/positions", "") };
+  auto options = "\"order_id\":" + orderId;
+  unique_json root { authRequest(params, "/v1/order/status", options) };
   double position;
-  if (json_array_size(root.get()) == 0)
+  if (json_string_value(json_object_get(root.get(),"remaining_amount")) == "")
   {
     *params.logFile << "<Bitfinex> WARNING: BTC position not available, return 0.0" << std::endl;
     position = 0.0;
   }
   else
   {
-    position = atof(json_string_value(json_object_get(json_array_get(root.get(), 0), "amount")));
+    position = atof(json_string_value(json_object_get(root.get(), "executed_amount")));
   }
   return position;
 }
@@ -157,6 +158,17 @@ double getLimitPrice(Parameters& params, double volume, bool isBid)
   return p;
 }
 
+std::string symbolTransform(Parameters& params, std::string leg){
+  std::transform(leg.begin(),leg.end(), leg.begin(), ::tolower);
+  if (leg.compare("btc")==0){
+    return "btc";
+  } else if (leg.compare("usd")==0){
+    return "usd";
+  } else {
+    *params.logFile << "<Bitfinex> WARNING: Currency not supported." << std::endl;
+    return "";
+  }
+}
 json_t* authRequest(Parameters &params, std::string request, std::string options)
 {
   using namespace std;

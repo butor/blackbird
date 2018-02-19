@@ -10,3 +10,6 @@ build
 .DS_Store
 blackbird.db-journal
 test.conf
+*.db
+*.db-journal
+

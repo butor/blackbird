@@ -50,27 +50,20 @@ quote_t getQuote(Parameters &params)
 
 double getAvail(Parameters &params, std::string currency)
 {
-  unique_json root{authRequest(params, "/0/private/Balance")};
-  json_t *result = json_object_get(root.get(), "result");
-  if (json_object_size(result) == 0)
-  {
-    return 0.0;
-  }
-  double available = 0.0;
-  if (currency.compare("usd") == 0)
-  {
-    const char *avail_str = json_string_value(json_object_get(result, "ZUSD"));
+  double available = 0.00;
+  currency = symbolTransform(params, currency);
+  //kraken happens to still need an if/then because we need margin free balance
+  if (currency.compare("ZUSD") == 0) {
+    unique_json root { authRequest(params, "/0/private/TradeBalance", "asset="+currency)};
+    json_t *result = json_object_get(root.get(), "result");
+    const char * avail_str = json_string_value(json_object_get(result, "mf"));
     available = avail_str ? atof(avail_str) : 0.0;
-  }
-  else if (currency.compare("btc") == 0)
-  {
-    const char *avail_str = json_string_value(json_object_get(result, "XXBT"));
+  } else {
+    unique_json root { authRequest(params, "/0/private/Balance")};
+    json_t *result = json_object_get(root.get(),"result");
+    const char * avail_str = json_string_value(json_object_get(result, currency.c_str()));
     available = avail_str ? atof(avail_str) : 0.0;
-  }
-  else
-  {
-    *params.logFile << "<Kraken> Currency not supported" << std::endl;
-  }
+  } 
   return available;
 }
 
@@ -165,9 +158,20 @@ bool isOrderComplete(Parameters &params, std::string orderId)
   }
 }
 
-double getActivePos(Parameters &params)
+double getActivePos(Parameters &params, std::string orderId)
 {
-  return getAvail(params, "btc");
+  double activeSize = 0.0;
+  if (!orderId.empty()){
+    std::string uri = "/0/private/QueryOrders";
+    std::string options = "txid=";
+    options += orderId;
+    unique_json root { authRequest(params, "/0/private/QueryOrders", options) };
+    auto result = json_object_get(root.get(),"result");
+    //SUGGEST: Pretty messy dude
+    std::string tmpord = orderId.c_str();
+    activeSize = atof(json_string_value(json_object_get(json_object_get(result,tmpord.c_str()),"vol")));
+  }
+  return activeSize;
 }
 
 double getLimitPrice(Parameters &params, double volume, bool isBid)
@@ -230,6 +234,23 @@ json_t *authRequest(Parameters &params, std::string request, std::string options
   return exchange.postRequest(request,
                               make_slist(std::begin(headers), std::end(headers)),
                               post_data);
+}
+
+std::string symbolTransform(Parameters& params, std::string currency){
+  std::transform(currency.begin(),currency.end(), currency.begin(), ::toupper);
+  if (currency.compare("BTC")==0){
+    return "XXBT";
+  
+  } else if (currency.compare("USD")==0){
+    return "ZUSD";
+
+  } else if (currency.compare("ETH")==0){
+    return "XETH";
+
+  } else { 
+    std::cout << "<Kraken> WARNING: Currency not supported." << std::endl;
+    return "";
+  }
 }
 
 void testKraken()

@@ -41,7 +41,7 @@ quote_t getQuote(Parameters &params)
 double getAvail(Parameters& params, std::string currency)
 {
   double available = 0.0;
-  transform(currency.begin(), currency.end(), currency.begin(), ::toupper);
+  currency = symbolTransform(params, currency);
   const char * curr_ = currency.c_str();
   
   unique_json root { authRequest(params, "/user_info") };
@@ -113,7 +113,7 @@ bool isOrderComplete(Parameters& params, std::string orderId) {
 }
 
 
-double getActivePos(Parameters& params) {
+double getActivePos(Parameters& params, std::string orderId) {
   return getAvail(params, "btc");
 }
 
@@ -182,6 +182,17 @@ std::string getSignature(Parameters& params, std::string msg) {
   return hmac_sha512.hex_digest();
 }
 
+std::string symbolTransform(Parameters& params, std::string leg){
+  std::transform(leg.begin(),leg.end(), leg.begin(), ::toupper);
+  if (leg.compare("BTC")==0){
+    return "BTC";
+  } else if (leg.compare("USD")==0){
+    return "USD";
+  } else {
+    *params.logFile << "<Exmo> WARNING: Currency not supported." << std::endl;
+    return "";
+  }
+}
 
 void testExmo() {
 

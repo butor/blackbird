@@ -45,19 +45,9 @@ double getAvail(Parameters& params, std::string currency)
   unique_json root { authRequest(params, "/v2/balance") };
 
   double available = 0.0;
-  const char * key = nullptr;
-  if (currency.compare("usd") == 0) {
-    key = "usd_available";
-  } else if (currency.compare("btc") == 0) {
-    key = "btc_available";
-  } else if (currency.compare("eth") == 0) {
-    key = "eth_available";
-  } else if (currency.compare("cad") == 0) {
-    key = "cad_available";
-  } else {
-    *params.logFile << "<QuadrigaCX> Currency " << currency << " not supported" << std::endl;
-  }
-  const char * avail_str = json_string_value(json_object_get(root.get(), key));
+  currency = symbolTransform(params, currency);
+  currency += "_available";
+  const char * avail_str = json_string_value(json_object_get(root.get(), currency.c_str()));
   available = avail_str ? atof(avail_str) : 0.0;
   return available;
 }
@@ -125,7 +115,7 @@ bool isOrderComplete(Parameters& params, std::string orderId)
    
 }
 
-double getActivePos(Parameters& params) {
+double getActivePos(Parameters& params, std::string orderId) {
   return getAvail(params, "btc");
 }
 
@@ -210,6 +200,22 @@ static std::string getSignature(Parameters& params, const uint64_t nonce)
                                NULL, NULL);
 
   return hex_str(hmac_digest, hmac_digest + SHA256_DIGEST_LENGTH);
+}
+
+std::string symbolTransform(Parameters& params, std::string leg){
+  std::transform(leg.begin(),leg.end(), leg.begin(), ::tolower);
+  if (leg.compare("btc")==0){
+    return "btc";
+  } else if (leg.compare("usd")==0){
+    return "usd";
+  } else if (leg.compare("cad")==0){
+    return "cad";}
+    else if (leg.compare("eth")==0){
+    return "eth";}
+  else {
+    *params.logFile << "<QuadrigaCX> WARNING: Currency not supported." << std::endl;
+    return "";
+  }
 }
 
 void testQuadriga(){

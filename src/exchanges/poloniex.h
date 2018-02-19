@@ -18,9 +18,11 @@ std::string sendShortOrder(Parameters& params, std::string direction, double qua
 
 bool isOrderComplete(Parameters& params, std::string orderId);
 
-double getActivePos(Parameters& params);
+double getActivePos(Parameters& params, std::string orderId="");
 
 double getLimitPrice(Parameters& params, double volume, bool isBid);
+
+std::string symbolTransform(Parameters& params, std::string leg);
 
 }
 

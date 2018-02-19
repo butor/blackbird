@@ -102,6 +102,13 @@ struct Parameters {
   double binanceFees;
   bool binanceEnable;
 
+
+  bool nullLongExchEnable;
+  double nullLongExchFees;
+  bool nullShortExchEnable;
+  double nullShortExchFees;
+  
+
   bool sendEmail;
   std::string senderAddress;
   std::string senderUsername;

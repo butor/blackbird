@@ -33,7 +33,7 @@ double getAvail(Parameters& params, std::string currency) {
   return 0.0;
 }
 
-double getActivePos(Parameters& params) {
+double getActivePos(Parameters& params, std::string orderId) {
   // TODO
   return 0.0;
 }
@@ -42,5 +42,15 @@ double getLimitPrice(Parameters& params, double volume, bool isBid) {
   // TODO
   return 0.0;
 }
-
+std::string symbolTransform(Parameters& params, std::string leg){
+  std::transform(leg.begin(),leg.end(), leg.begin(), ::toupper);
+  if (leg.compare("BTC")==0){
+    return "XBT";
+  } else if (leg.compare("USD")==0){
+    return "USD";
+  } else {
+    *params.logFile << "<itbit> WARNING: Currency not supported." << std::endl;
+    return "";
+  }
+}
 }

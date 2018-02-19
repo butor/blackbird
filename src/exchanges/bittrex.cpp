@@ -54,16 +54,12 @@ quote_t getQuote(Parameters &params)
 
 double getAvail(Parameters &params, std::string currency)
 {
-  std::string cur_str;
-  cur_str += "currency=";
-  if (currency.compare("USD")==0){
-    cur_str += "USDT";
-  }
-  else {
-    cur_str += currency.c_str();
-  }
-  unique_json root { authRequest(params, "/api/v1.1/account/getbalance", cur_str)};
+  currency = symbolTransform(params, currency);
+  //cur_str += "currency=";
+  std::string cur_str = "currency=" + currency;
 
+  unique_json root { authRequest(params, "/api/v1.1/account/getbalance", cur_str)};
+  //FIXME: theres no error checking here
   double available = json_number_value(json_object_get(json_object_get(root.get(), "result"),"Available"));
   return available;
 }
@@ -153,8 +149,17 @@ bool isOrderComplete(Parameters& params, std::string orderId)
   return tmp;  
 }
 
-double getActivePos(Parameters& params) {
-    return getAvail(params, "BTC");
+double getActivePos(Parameters& params, std::string orderId) {
+  double activeSize = 0.0;
+  if (!orderId.empty()){
+    std::string uri = "/api/v1.1/account/getorder";
+    std::string builder = "uuid=";
+    builder += orderId.c_str();
+    unique_json root {authRequest(params, uri, builder) };
+    activeSize = json_number_value(json_object_get(json_object_get(root.get(), "result"),"Quantity"));
+  }
+  return activeSize;
+
 }
 
 double getLimitPrice(Parameters& params, double volume, bool isBid) {
@@ -182,6 +187,18 @@ double getLimitPrice(Parameters& params, double volume, bool isBid) {
   }
 
   return p;
+}
+
+std::string symbolTransform(Parameters& params, std::string leg){
+  std::transform(leg.begin(),leg.end(), leg.begin(), ::toupper);
+  if (leg.compare("BTC")==0){
+    return "BTC";
+  } else if (leg.compare("USD")==0 || leg.compare("USDT")==0){
+    return "USDT"; //WARNING: hard transform usd-> USDT not appropriate for all users
+  } else {
+    *params.logFile << "<Bittrex> WARNING: Currency not supported." << std::endl;
+    return "";
+  }
 }
 
 // build auth request - needs to append apikey, nonce, and calculate HMAC 512 hash and include it under api sign header

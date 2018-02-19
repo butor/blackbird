@@ -68,6 +68,7 @@ double getAvail(Parameters& params, std::string currency)
   }
   double availability = 0.0;
   const char* returnedText = NULL;
+  symbolTransform(params, currency);
   if (currency == "btc")
   {
     returnedText = json_string_value(json_object_get(root.get(), "btc_balance"));
@@ -82,6 +83,7 @@ double getAvail(Parameters& params, std::string currency)
   }
   else
   {
+    //FIXME: not really that descriptive with transformer
     *params.logFile << "<Bitstamp> Error with the credentials." << std::endl;
     availability = 0.0;
   }
@@ -122,7 +124,18 @@ bool isOrderComplete(Parameters& params, std::string orderId)
   return status && status == std::string("Finished");
 }
 
-double getActivePos(Parameters& params) { return getAvail(params, "btc"); }
+double getActivePos(Parameters& params, std::string orderId) { 
+  //something like /api/order_status/
+  auto options = "id=" + orderId;
+  unique_json root { authRequest(params, "/api/order_status/", options)};
+  size_t arraySize = json_array_size(root.get());
+  double sum = 0.0;
+  for (int i = 0; i < arraySize; ++i){
+    //Is the key we are looking for btc in their return? we want the executed amount..
+    sum += atof(json_string_value(json_object_get(json_array_get(root.get(), i),"btc")));
+  }
+  return sum; 
+  }
 
 double getLimitPrice(Parameters& params, double volume, bool isBid)
 {
@@ -148,6 +161,18 @@ double getLimitPrice(Parameters& params, double volume, bool isBid)
     i++;
   }
   return p;
+}
+
+std::string symbolTransform(Parameters& params, std::string leg){
+  std::transform(leg.begin(),leg.end(), leg.begin(), ::tolower);
+  if (leg.compare("btc")==0){
+    return "btc";
+  } else if (leg.compare("usd")==0){
+    return "usd";
+  } else {
+    *params.logFile << "<Bitstamp> WARNING: Currency not supported." << std::endl;
+    return "";
+  }
 }
 
 json_t* authRequest(Parameters &params, std::string request, std::string options)

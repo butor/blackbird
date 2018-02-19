@@ -53,14 +53,10 @@ double getAvail(Parameters& params, std::string currency) {
   double availability = 0.0;
   const char* returnedText;
   std::string currencyAllCaps;
-  if (currency.compare("btc") == 0) {
-    currencyAllCaps = "BTC";
-  } else if (currency.compare("usd") == 0) {
-    currencyAllCaps = "USD";
-  }
+  currency = symbolTransform(params, currency);
   for (size_t i = 0; i < arraySize; i++) {
     std::string tmpCurrency = json_string_value(json_object_get(json_array_get(root.get(), i), "currency"));
-    if (tmpCurrency.compare(currencyAllCaps.c_str()) == 0) {
+    if (tmpCurrency.compare(currency.c_str()) == 0) {
       returnedText = json_string_value(json_object_get(json_array_get(root.get(), i), "amount"));
       if (returnedText != NULL) {
         availability = atof(returnedText);
@@ -95,7 +91,7 @@ bool isOrderComplete(Parameters& params, std::string orderId) {
   return json_is_false(json_object_get(root.get(), "is_live"));
 }
 
-double getActivePos(Parameters& params) {
+double getActivePos(Parameters& params, std::string orderId) {
   return getAvail(params, "btc");
 }
 
@@ -124,6 +120,18 @@ double getLimitPrice(Parameters& params, double volume, bool isBid)
   }
 
   return p;
+}
+
+std::string symbolTransform(Parameters& params, std::string leg){
+  std::transform(leg.begin(),leg.end(), leg.begin(), ::toupper);
+  if (leg.compare("BTC")==0){
+    return "BTC";
+  } else if (leg.compare("USD")==0){
+    return "USD";
+  } else {
+    *params.logFile << "<Gemini> WARNING: Currency not supported." << std::endl;
+    return "";
+  }
 }
 
 json_t* authRequest(Parameters& params, std::string url, std::string request, std::string options) {

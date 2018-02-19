@@ -46,15 +46,10 @@ double getAvail(Parameters& params, std::string currency)
   unique_json root { authRequest(params, "https://www.okcoin.com/api/v1/userinfo.do", signature, content) };
   double availability = 0.0;
   const char* returnedText;
-  if (currency == "usd")
-  {
-    returnedText = json_string_value(json_object_get(json_object_get(json_object_get(json_object_get(root.get(), "info"), "funds"), "free"), "usd"));
-  }
-  else if (currency == "btc")
-  {
-    returnedText = json_string_value(json_object_get(json_object_get(json_object_get(json_object_get(root.get(), "info"), "funds"), "free"), "btc"));
-  }
-  else returnedText = "0.0";
+  currency = symbolTransform(params, currency);
+  if (currency != ""){
+    returnedText = json_string_value(json_object_get(json_object_get(json_object_get(json_object_get(root.get(), "info"), "funds"), "free"), currency.c_str()));  
+  } else {returnedText = "0.0";}
 
   if (returnedText != NULL) {
     availability = atof(returnedText);
@@ -119,7 +114,7 @@ bool isOrderComplete(Parameters& params, std::string orderId)
   return status == 2;
 }
 
-double getActivePos(Parameters& params) { return getAvail(params, "btc"); }
+double getActivePos(Parameters& params, std::string orderId) { return getAvail(params, "btc"); }
 
 double getLimitPrice(Parameters& params, double volume, bool isBid)
 {
@@ -203,7 +198,17 @@ json_t* authRequest(Parameters& params, std::string url, std::string signature, 
     return NULL;
   }
 }
-
+std::string symbolTransform(Parameters& params, std::string leg){
+  std::transform(leg.begin(),leg.end(), leg.begin(), ::tolower);
+  if (leg.compare("btc")==0){
+    return "btc";
+  } else if (leg.compare("usd")==0){
+    return "usd";
+  } else {
+    *params.logFile << "<OkCoin> WARNING: Currency not supported." << std::endl;
+    return "";
+  }
+}
 void getBorrowInfo(Parameters& params)
 {
   std::ostringstream oss;

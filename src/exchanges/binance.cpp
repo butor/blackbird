@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <iomanip>
 
+
 namespace Binance
 {
 
@@ -46,35 +47,33 @@ quote_t getQuote(Parameters &params)
 
 double getAvail(Parameters &params, std::string currency)
 {
-    std::string cur_str;
-    //cur_str += "symbol=BTCUSDT";
-    if (currency.compare("USD") == 0)
-    {
-        cur_str += "USDT";
-    }
-    else
-    {
-        cur_str += currency.c_str();
-    }
+
+    currency = symbolTransform(params, currency);
+
 
     unique_json root{authRequest(params, "GET", "/api/v3/account", "")};
     size_t arraySize = json_array_size(json_object_get(root.get(), "balances"));
     double available = 0.0;
     const char *currstr;
     auto balances = json_object_get(root.get(), "balances");
+
+    // this loops 151 times....
     for (size_t i = 0; i < arraySize; i++)
     {
         std::string tmpCurrency = json_string_value(json_object_get(json_array_get(balances, i), "asset"));
-        if (tmpCurrency.compare(cur_str.c_str()) == 0)
+        if (tmpCurrency.compare(currency) == 0)
+
         {
             currstr = json_string_value(json_object_get(json_array_get(balances, i), "free"));
             if (currstr != NULL)
             {
                 available = atof(currstr);
+
+                break;
             }
             else
             {
-                *params.logFile << "<binance> Error with currency string" << std::endl;
+                *params.logFile << "<Binance> Error with currency string" << std::endl;
                 available = 0.0;
             }
         }
@@ -134,9 +133,19 @@ bool isOrderComplete(Parameters &params, std::string orderId)
     return complete;
 }
 //TODO: Currency
-double getActivePos(Parameters &params)
+
+double getActivePos(Parameters &params, std::string orderId)
 {
-    return getAvail(params, "BTC");
+  double activeSize = 0.0;
+  if (!orderId.empty()){
+    std::string builder = "symbol=BTCUSDT&orderId=";
+    builder += orderId.c_str();
+    unique_json root { authRequest(params, "GET", "/api/v3/order",builder) };
+    activeSize = atof(json_string_value(json_object_get(root.get(),"origQty")));
+  }
+
+  return activeSize;  
+
 }
 
 double getLimitPrice(Parameters &params, double volume, bool isBid)
@@ -212,6 +221,19 @@ static std::string getSignature(Parameters &params, std::string payload)
                                 NULL, NULL);
     std::string api_sign_header = hex_str(hmac_digest, hmac_digest + SHA256_DIGEST_LENGTH);
     return api_sign_header;
+}
+
+
+std::string symbolTransform(Parameters& params, std::string leg){
+    std::transform(leg.begin(),leg.end(), leg.begin(), ::toupper);
+    if (leg.compare("USD")==0 || leg.compare("USDT")==0){
+        return "USDT"; //WARNING: allowing hardswap of USDT, not applicable to all users
+    } else if (leg.compare("BTC")==0){
+        return "BTC";
+    } else {
+        *params.logFile << "<Binance> WARNING: Currency not supported" << std::endl;
+        return "";
+    }
 }
 
 void testBinance()

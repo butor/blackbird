@@ -152,6 +152,12 @@ Parameters::Parameters(std::string fileName) {
   binanceFees = getDouble(getParameter("BinanceFees", configFile));
   binanceEnable = getBool(getParameter("BinanceEnable", configFile));
 
+  nullLongExchEnable = getBool(getParameter("NullLongExchEnable", configFile));
+  nullLongExchFees = getDouble(getParameter("NullLongExchFees", configFile));
+  nullShortExchEnable = getBool(getParameter("NullShortExchEnable", configFile));
+  nullShortExchFees = getDouble(getParameter("NullShortExchFees", configFile));
+
+  
   sendEmail = getBool(getParameter("SendEmail", configFile));
   senderAddress = getParameter("SenderAddress", configFile);
   senderUsername = getParameter("SenderUsername", configFile);

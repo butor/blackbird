@@ -4,6 +4,27 @@
 <img src="https://cloud.githubusercontent.com/assets/11370278/10808535/02230d46-7dc3-11e5-92d8-da15cae8c6e9.png" width="50%" alt="Blackbird Bitcoin Arbitrage">
 </p>
 
+### Parallelism Branch
+
+__NOTE THAT THIS BRANCH IS UNSTABLE/A WORK IN PROGRESS PROCEED AT YOUR OWN RISK__
+
+__DO NOT RUN THIS BRANCH WITH OUTSTANDING ORDERS FROM MASTER THEY WILL NOT BE IMPORTED__
+
+The known issues are as follows:
+
+1. Balance calculations for printout are incorrect. This should not effect trading.
+
+2. SendEmail is not functioning.
+
+3. Many exchanges do not have "getActivePos" members which conform to the new style. These members must poll the exchange
+with the orderId of the executed trade and return a double type value which represents the amount of the Leg1 currency the trade executed for (sometimes, this is returned as an array of partial fills) so that we know the volume needed to close the trade on exit.
+
+4. _Stop_After_No_Trade_ is currently not implemented.
+
+5. There should be more rigorous controls added to handle disable/enabling of exchanges across sessions, or a new exchangeId regime is needed. Currently, if a user enables/disables exchanges at will with open trades from a previous session the exchangeIds will be wrong and erroneous trades could execute. 
+
+In testing this branch, you should make sure to never disable/enable more exchanges if you have a trade outstanding. Adding getActivePos members would be greatly appreciated.
+
 ### Introduction
 
 Blackbird Bitcoin Arbitrage is a C++ trading system that does automatic long/short arbitrage between Bitcoin exchanges.
@@ -39,6 +60,8 @@ __THE AUTHORS AND ALL AFFILIATES ASSUME NO RESPONSIBILITY FOR YOUR TRADING RESUL
 ### Code Information
 
 The trade results are stored in CSV files and the detailed activity is stored in log files. New files are created every time Blackbird is started.
+
+Trade results are also stored in a local database file for later reference.
 
 It is possible to automatically stop Blackbird after the next trade has closed by creating, at any time, an empty file named _stop_after_notrade_.
 

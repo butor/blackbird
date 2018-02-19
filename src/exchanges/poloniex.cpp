@@ -52,11 +52,10 @@ quote_t getQuote(Parameters &params)
 
 double getAvail(Parameters &params, std::string currency)
 {
-  std::transform(begin(currency), end(currency), begin(currency), ::toupper);
+
+  currency = symbolTransform(params, currency);
   std::string options = "account=exchange";
-  if (currency.compare("USD")==0) {
-    currency += "T";
-  }
+
   unique_json root { authRequest(params, "returnAvailableAccountBalances", options) };
   auto funds = json_string_value(json_object_get(json_object_get(root.get(), "exchange"), currency.c_str()));
   return funds ? std::stod(funds) : 0.0;
@@ -95,27 +94,25 @@ bool isOrderComplete(Parameters& params, std::string orderId)
   return true;
 }
 
-double getActivePos(Parameters& params) {
-  // TODO: When we add the new getActivePos style uncomment this
-  // double activeSize = 0.0;
-  // if (!orderId.empty()){
-  //   std::string options = "orderNumber=";
-  //   options += orderId;
-  //   unique_json root {authRequest(params, "returnOrderTrades", options) };
-  //   size_t arraySize = json_array_size(root.get());
-  //   double tmpFee = 0.0;
-  //   double tmpAmount = 0.0;
-  //   //polo returns weird things - we must loop through all the executed trades (for partial fills)
-  //   //the actual active size is then SUM(amount*(1-tmpFee)) fee seems to be expressed as a percent
-  //   for (size_t i = 0; i < arraySize; i++) {
-  //     tmpFee = atof(json_string_value(json_object_get(json_array_get(root.get(),i),"fee")));
-  //     tmpAmount = atof(json_string_value(json_object_get(json_array_get(root.get(),i),"amount")));
-  //     activeSize += tmpAmount*(1-tmpFee);
-  //   }
-  // }
-  // return activeSize;
 
-  return getAvail(params, "BTC");
+double getActivePos(Parameters& params, std::string orderId) {
+  double activeSize = 0.0;
+  if (!orderId.empty()){
+    std::string options = "orderNumber=";
+    options += orderId;
+    unique_json root {authRequest(params, "returnOrderTrades", options) };
+    size_t arraySize = json_array_size(root.get());
+    double tmpFee = 0.0;
+    double tmpAmount = 0.0;
+    //polo returns weird things - we must loop through all the executed trades (for partial fills)
+    //the actual active size is then SUM(amount*(1-tmpFee)) fee seems to be expressed as a percent
+    for (size_t i = 0; i < arraySize; i++) {
+      tmpFee = atof(json_string_value(json_object_get(json_array_get(root.get(),i),"fee")));
+      tmpAmount = atof(json_string_value(json_object_get(json_array_get(root.get(),i),"amount")));
+      activeSize += tmpAmount*(1-tmpFee);
+    }
+  }
+  return activeSize;
 }
 
 double getLimitPrice(Parameters& params, double volume, bool isBid) {
@@ -141,6 +138,20 @@ double getLimitPrice(Parameters& params, double volume, bool isBid) {
     i++;
   }
   return p;
+
+}
+
+std::string symbolTransform(Parameters& params, std::string leg){
+  std::transform(leg.begin(),leg.end(), leg.begin(), ::toupper);
+  if (leg.compare("BTC")==0){
+    return "BTC";
+  } else if (leg.compare("USD")==0 || leg.compare("USDT")==0){
+    return "USDT"; //WARNING: hard transform usd-> USDT not appropriate for all users
+  } else {
+    *params.logFile << "<Poloniex> WARNING: Currency not supported." << std::endl;
+    return "";
+  }
+
 }
 
 json_t* authRequest(Parameters &params, const char *request, const std::string &options)

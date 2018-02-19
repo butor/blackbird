@@ -23,12 +23,14 @@ static RestApi &queryHandle(Parameters &params)
 
 quote_t getQuote(Parameters &params)
 {
+
   auto &exchange = queryHandle(params);
   std::string pair;
   pair = "/products/";
-  pair += params.leg1.c_str();
-  pair += "-";
-  pair += params.leg2.c_str();
+  //pair += "BTC";
+  //pair += "-";
+  //pair += "USD";
+  pair += pairTransform(params);
   pair += "/ticker";
   unique_json root{exchange.getRequest(pair)};
   const char *bid, *ask;
@@ -45,6 +47,7 @@ quote_t getQuote(Parameters &params)
 double getAvail(Parameters &params, std::string currency)
 {
   unique_json root{authRequest(params, "GET", "/accounts", "")};
+  currency = symbolTransform(params, currency);
   size_t arraySize = json_array_size(root.get());
   double available = 0.0;
   const char *currstr;
@@ -57,6 +60,7 @@ double getAvail(Parameters &params, std::string currency)
       if (currstr != NULL)
       {
         available = atof(currstr);
+        break;
       }
       else
       {
@@ -68,10 +72,17 @@ double getAvail(Parameters &params, std::string currency)
   return available;
 }
 
-double getActivePos(Parameters &params)
+double getActivePos(Parameters &params, std::string orderId)
 {
-  // TODO: this is not really a good way to get active positions
-  return getAvail(params, "BTC");
+  double activeSize = 0.0;
+  if (!orderId.empty())
+  {
+    std::string uri = "/orders/";
+    uri += orderId.c_str();
+    unique_json root{authRequest(params, "GET", uri, "")};
+    activeSize = atof(json_string_value(json_object_get(root.get(), "size")));
+  }
+  return activeSize;
 }
 
 double getLimitPrice(Parameters &params, double volume, bool isBid)
@@ -219,6 +230,28 @@ std::string gettime()
   snprintf(buff5, 40, "%lld.%d000", result2, milli);
   return buff5;
 }
+
+std::string pairTransform(Parameters& params){
+  std::string leg1 = params.leg1.c_str();
+  std::string leg2 = params.leg2.c_str();
+  std::transform(leg1.begin(), leg1.end(), leg1.begin(), ::toupper);
+  std::transform(leg2.begin(),leg2.end(), leg2.begin(), ::toupper);
+  std::string marketurl = leg1 + "-" +leg2;
+  return marketurl;
+}
+std::string symbolTransform(Parameters& params, std::string leg){
+  std::transform(leg.begin(),leg.end(), leg.begin(), ::toupper);
+  if (leg.compare("BTC")==0){
+    return "BTC";
+  } else if (leg.compare("USD")==0 || leg.compare("USDT")==0){
+    return "USD"; //WARNING: hard transform usd-> USDT not appropriate for all users
+  } else {
+    *params.logFile << "<GDAX> WARNING: Currency not supported." << std::endl;
+    return "";
+  }
+}
+
+
 void testGDAX()
 {
 
