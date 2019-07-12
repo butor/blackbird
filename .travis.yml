@@ -7,15 +7,34 @@ compiler:
   - clang
   - gcc
 
+os:
+  - linux
+  - osx
+
+env:
+  - BUILD_TYPE=Debug
+  - BUILD_TYPE=Release
+
 before_install:
-  - sudo apt-get update -qq
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq                                                   ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update                                                                 ;fi
 
 install:
-  - sudo apt-get install -y libjansson-dev libcurl4-openssl-dev sendemail
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y libjansson-dev libcurl4-openssl-dev sendemail     ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install cmake || brew upgrade cmake                                    ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install openssl || brew upgrade openssl                                ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install jansson || brew upgrade jansson                                ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install curl || brew upgrade curl                                      ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install sqlite3 || brew upgrade sqlite3                                ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install sendemail || brew upgrade sendemail                            ;fi
 
 before_script:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export LDFLAGS="-L/usr/local/opt/curl/lib"                                  ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export CPPFLAGS="-I/usr/local/opt/curl/include"                             ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export OPENSSL_ROOT_DIR="/usr/local/opt/openssl"                            ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export OPENSSL_LIBRARIES="/usr/local/opt/openssl/lib"                       ;fi
   - cmake --version
 
 script:
-  - cmake -B./build -H.
+  - cmake -B./build -H. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
   - cmake --build ./build -- install
