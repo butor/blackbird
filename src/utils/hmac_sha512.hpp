@@ -8,23 +8,22 @@
 class HMAC_SHA512 {
 public:
 	HMAC_SHA512(const std::string& key, const std::string& msg) {
-		HMAC_CTX ctx;
-		HMAC_CTX_init(&ctx);
+		HMAC_CTX *ctx = HMAC_CTX_new();
 
 		// Set HMAC key.
-		HMAC_Init_ex(&ctx, reinterpret_cast<const unsigned char*>(key.c_str()), key.size(), EVP_sha512(), NULL);
+		HMAC_Init_ex(ctx, reinterpret_cast<const unsigned char*>(key.c_str()), key.size(), EVP_sha512(), NULL);
 
 		// May be called repeatedly to insert all your data.
-		HMAC_Update(&ctx, reinterpret_cast<const unsigned char*>(msg.c_str()), msg.size());
+		HMAC_Update(ctx, reinterpret_cast<const unsigned char*>(msg.c_str()), msg.size());
 
 		// Finish HMAC computation and fetch result.
 		unsigned char* result = new unsigned char[129];
 		unsigned int result_len = 129;
-		HMAC_Final(&ctx, result, &result_len);
+		HMAC_Final(ctx, result, &result_len);
 		for (unsigned int i = 0; i < result_len; i++) {
 			digest_.push_back(int(result[i]));
 		}
-		HMAC_CTX_cleanup(&ctx);
+		HMAC_CTX_free(ctx);
 	}
 
 	std::string hex_digest() {
