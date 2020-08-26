@@ -125,6 +125,8 @@ libssl-dev
 libjansson-dev
 libcurl4-openssl-dev
 libsqlite3-dev (available as a Blackbird submodule)
+build-essential
+cmake
 sendemail
 ```
 
@@ -159,7 +161,7 @@ If all goes well this produces a Blackbird executable in the project directory.
 1. Run the following commands:
 
   ```
-  sudo apt-get install libssl-dev libjansson-dev libcurl4-openssl-dev libsqlite3-dev sendemail make gcc g++
+  sudo apt-get install libssl-dev libjansson-dev libcurl4-openssl-dev libsqlite3-dev sendemail make gcc g++ build-essential cmake
   mkdir blackbird
   cd blackbird
   git clone --recursive  git://github.com/butor/blackbird.git .
