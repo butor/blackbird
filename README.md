@@ -103,7 +103,7 @@ Parameter | Default Value | Description
 | MaxExposure | 25,000 | Maximum exposure per exchange. If the limit is $25,000 then Blackbird won't send any order larger than that on each exchange |
 | MaxLength | 5,184,000 | The maximum length of a trade in number of iterations. If this value is reached then Blackbird will exit the market regardless of the spread. Warning: with this value, the system can exit with a loss so It's recommended to use a large value. The default is 180 days with GapSec at 3 seconds |
 | DebugMaxIteration | 3,200,000 | The maximum number of iteration. Once DebugMaxIteration is reached Blackbird is terminated with return=0. Useful for troubleshooting the software |
-| Verbose | true | Write the bid/ask and then spreads to the log file at every iteration. The log file size will be larger but it will show how Blackbird analyses the spreads |
+| Verbose | true | Write the bid/ask and then spreads it to the log file at every iteration. The log file size will be larger but it will show how Blackbird analyses the spreads |
 | Interval | 3 sec. | Timelapse in seconds of an iteration. By default, the quotes download and the spreads analysis for all the exchanges are done every 3 seconds |
 | SpreadEntry | 0.0080 | The spread threshold above which the trailing spreads are generated to capture an arbitrage opportunity |
 | SpreadTarget | 0.0050 | This is the targeted profit. It represents the net profit and takes the exchange fees into account. If SpreadEntry is at 0.80% and trades are generated at that level on two exchanges with 0.25% fees each, Blackbird will set the exit threshold at -0.70% (0.80% spread entry - 4x0.25% fees - 0.50% target = -0.70%) |
@@ -112,7 +112,7 @@ Parameter | Default Value | Description
 | TrailingSpreadCount | 1 |  The number of times the spread must be between SpreadTarget and the trailing spread before sending the orders to the market |
 | OrderBookFactor | 3.0 | In order to be executed as fast as possible and avoid slippage, Blackbird checks the liquidity in the order books of the exchanges and makes sure there are at least 3.0 times the needed liquidity before executing the order |
 | UseVolatility | false |  If true, display the spreads volatility information in the log file. This is not used for the moment and only displayed as information |
-| VolatilityPeriod | 600 | The period length of the volatility in number of iterations. This is not used for the moment and only displayed as information |
+| VolatilityPeriod | 600 | The period length of the volatility in the number of iterations. This is not used for the moment and only displayed as information |
 | SendEmail | false | When true, an e-mail will be sent every time an arbitrage trade is completed, with information such as the names of the exchanges and the trade return |
 | DBFile | 'blackbird.db' | SQLite3 database file to use for storing the bid/ask information of the exchanges for reference. Blackbird will create this file if it doesn't already exist |
 
