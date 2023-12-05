@@ -11,10 +11,7 @@ Bitcoin::Bitcoin(unsigned i, std::string n, double f, bool h, bool m) {
   ask = 0.0;
 }
 
-void Bitcoin::updateData(quote_t quote) {
-  bid = quote.bid();
-  ask = quote.ask();
-}
+void Bitcoin::updateData(quote_t quote): bid(quote.bid()), ask(quote.ask()) {}
 
 unsigned Bitcoin::getId() const { return id; }
 
@@ -23,9 +20,12 @@ double Bitcoin::getBid()  const { return bid; }
 double Bitcoin::getAsk()  const { return ask; }
 
 double Bitcoin::getMidPrice() const {
-  if (bid > 0.0 && ask > 0.0) {
+  if (bid > 0.0 && ask > 0.0) 
+  {
     return (bid + ask) / 2.0;
-  } else {
+  } 
+  else 
+  {
     return 0.0;
   }
 }
